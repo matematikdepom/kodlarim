@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Eş Doğru Parçası Çizme Etkinliği</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #007bff;
+            --success-color: #28a745;
+            --suggestion-color: #ffc107;
+            --error-color: #dc3545;
+            --bg-color: #f4f7f9;
+            --container-bg: #ffffff;
+            --text-color: #333333;
+            --border-color: #dddddd;
+        }
+
+        body {
+            font-family: 'Roboto', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            text-align: center;
+        }
+
+        .container {
+            padding: 25px;
+            background-color: var(--container-bg);
+            border-radius: 12px;
+            box-shadow: 0 6px 12px rgba(0,0,0,0.1);
+            max-width: 95%;
+            width: 550px;
+            box-sizing: border-box;
+        }
+
+        h1 {
+            color: var(--primary-color);
+            margin-bottom: 15px;
+            font-size: 1.8em;
+        }
+        
+        p {
+            font-size: 1.1em;
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+
+        canvas {
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            cursor: crosshair;
+            touch-action: none;
+            background-color: #fff;
+            width: 100%;
+            height: auto;
+        }
+
+        .btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1.1em;
+            font-weight: bold;
+            transition: background-color 0.3s, transform 0.2s;
+            margin-top: 10px;
+            min-width: 180px;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+        
+        .btn.success {
+            background-color: var(--success-color);
+        }
+        
+        .button-container {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        #feedback {
+            margin-top: 15px;
+            font-size: 1.2em;
+            font-weight: bold;
+            height: 30px; 
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div id="activityScreen">
+            <h1>Eş Doğru Parçası Çizelim</h1>
+
+<h1>Hazırlayan: Osman AYDOĞDU</h1>
+            <p>
+                <b>Hedefin:</b> Verilen doğru parçasıyla aynı uzunlukta bir doğru parçası çizmek.
+            </p>
+            <canvas id="geometryCanvas" width="498" height="498"></canvas>
+            <div id="feedback" style="color: rgb(40, 167, 69);"></div>
+            <div class="button-container">
+                <button id="actionButton" class="btn">Tekrar Dene</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const canvas = document.getElementById('geometryCanvas');
+            const ctx = canvas.getContext('2d');
+            
+            const feedbackEl = document.getElementById('feedback');
+            const actionButton = document.getElementById('actionButton');
+
+            let currentStage = 1;
+            const totalStages = 5; // Toplam görev sayısı
+            let stages = {};
+            let targetLine;
+            let isDrawing = false;
+            let userLine = null;
+            let isTaskSuccessful = false;
+            
+            const gridSize = 20;
+            const tolerance = gridSize / 2;
+
+            let isAudioInitialized = false;
+            let synth;
+
+            async function initAudio() {
+                if (isAudioInitialized) return;
+                try {
+                    await Tone.start();
+                    synth = new Tone.Synth().toDestination();
+                    isAudioInitialized = true;
+                } catch (e) { console.error("Ses motoru başlatılamadı:", e); }
+            }
+
+            function playSuccessSound() {
+                if (!isAudioInitialized || !synth) return;
+                synth.triggerAttackRelease("C5", "8n", Tone.now());
+                synth.triggerAttackRelease("G5", "8n", Tone.now() + 0.2);
+            }
+
+            function playErrorSound() {
+                if (!isAudioInitialized || !synth) return;
+                synth.triggerAttackRelease("C3", "8n");
+            }
+
+            function playClickSound() {
+                 if (!isAudioInitialized) return;
+                try {
+                    const clickSynth = new Tone.MembraneSynth().toDestination();
+                    clickSynth.triggerAttackRelease("C2", "8n");
+                } catch (e) { /* Hata olursa sessiz kal */ }
+            }
+
+            function snapToGrid(coord) {
+                return Math.round(coord / gridSize) * gridSize;
+            }
+            
+            function calculateLength(p1, p2) {
+                return Math.hypot(p2.x - p1.x, p2.y - p1.y);
+            }
+
+            function generateRandomLineSegment(orientation) {
+                const w = canvas.width;
+                const h = canvas.height;
+                const G = gridSize;
+                const minLen = 4;
+                const maxLen = 10;
+
+                const lengthInUnits = Math.floor(Math.random() * (maxLen - minLen + 1)) + minLen;
+                const lengthInPixels = lengthInUnits * G;
+                
+                const padding = 3 * G;
+                const isVertical = (orientation === 'dikey');
+
+                let p1 = {}, p2 = {};
+
+                if (isVertical) {
+                    p1.x = snapToGrid(Math.random() * (w - 2 * padding) + padding);
+                    p1.y = snapToGrid(Math.random() * (h - lengthInPixels - 2 * padding) + padding);
+                    p2.x = p1.x;
+                    p2.y = p1.y + lengthInPixels;
+                } else { // Yatay
+                    p1.x = snapToGrid(Math.random() * (w - lengthInPixels - 2 * padding) + padding);
+                    p1.y = snapToGrid(Math.random() * (h - 2 * padding) + padding);
+                    p2.x = p1.x + lengthInPixels;
+                    p2.y = p1.y;
+                }
+                return { p1, p2 };
+            }
+
+            function setupStages() {
+                stages = {};
+                
+                const numVertical = Math.floor(totalStages / 2);
+                const numHorizontal = totalStages - numVertical;
+                let orientations = [];
+                
+                for (let i = 0; i < numVertical; i++) orientations.push('dikey');
+                for (let i = 0; i < numHorizontal; i++) orientations.push('yatay');
+
+                // Fisher-Yates shuffle: Oryantasyon planını karıştır
+                for (let i = orientations.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [orientations[i], orientations[j]] = [orientations[j], orientations[i]];
+                }
+                
+                // Karıştırılmış plana göre aşamaları oluştur
+                for (let i = 1; i <= totalStages; i++) {
+                    stages[i] = generateRandomLineSegment(orientations[i - 1]);
+                }
+            }
+
+            function setupStage(stageNumber) {
+                isTaskSuccessful = false;
+                userLine = null;
+                targetLine = stages[stageNumber];
+                targetLine.length = calculateLength(targetLine.p1, targetLine.p2);
+                feedbackEl.textContent = '';
+                actionButton.textContent = 'Tekrar Dene';
+                actionButton.className = 'btn';
+                drawInitialScene();
+            }
+            
+            function drawGrid() {
+                ctx.beginPath();
+                ctx.strokeStyle = '#e0e0e0';
+                ctx.lineWidth = 0.5;
+                for (let x = 0; x <= canvas.width; x += gridSize) { ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); }
+                for (let y = 0; y <= canvas.height; y += gridSize) { ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); }
+                ctx.stroke();
+            }
+
+            function drawLineWithLabel(line, color, label = "", showLength = false) {
+                 const lengthInUnits = Math.round(calculateLength(line.p1, line.p2) / gridSize);
+                 ctx.save();
+                 ctx.beginPath();
+                 ctx.moveTo(line.p1.x, line.p1.y);
+                 ctx.lineTo(line.p2.x, line.p2.y);
+                 ctx.strokeStyle = color; ctx.lineWidth = 4; ctx.stroke();
+                 ctx.beginPath();
+                 ctx.arc(line.p1.x, line.p1.y, 5, 0, Math.PI * 2);
+                 ctx.arc(line.p2.x, line.p2.y, 5, 0, Math.PI * 2);
+                 ctx.fillStyle = color; ctx.fill();
+                 if (label || showLength) {
+                    ctx.font = 'bold 16px Roboto';
+                    const midX = (line.p1.x + line.p2.x) / 2;
+                    const midY = (line.p1.y + line.p2.y) / 2;
+                    const text = showLength ? `${label}: ${lengthInUnits} birim` : label;
+                    ctx.fillStyle = color;
+                    const isVertical = line.p1.x === line.p2.x;
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = isVertical ? 'middle' : 'bottom';
+                    const offset = isVertical ? (midX > canvas.width / 2 ? -25 : 25) : -15;
+                    ctx.fillText(text, midX + (isVertical ? offset : 0), midY + (isVertical ? 0 : offset));
+                 }
+                 ctx.restore();
+            }
+
+            function drawInitialScene() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                drawGrid();
+                const primaryColor = getComputedStyle(document.documentElement).getPropertyValue('--primary-color');
+                drawLineWithLabel(targetLine, primaryColor, "", false);
+            }
+            
+            function getEventPosition(event) {
+                const rect = canvas.getBoundingClientRect();
+                const touch = event.touches ? event.touches[0] : event;
+                return { x: touch.clientX - rect.left, y: touch.clientY - rect.top };
+            }
+
+            function startDrawing(event) {
+                if ((event.type === 'mousedown' && event.button !== 0) || isTaskSuccessful) { return; }
+                event.preventDefault(); 
+                const pos = getEventPosition(event);
+                const snappedPos = {x: snapToGrid(pos.x), y: snapToGrid(pos.y)};
+                isDrawing = true;
+                userLine = { p1: snappedPos, p2: snappedPos };
+            }
+
+            function draw(event) {
+                if (!isDrawing) return;
+                event.preventDefault();
+                const pos = getEventPosition(event);
+                const dx = Math.abs(pos.x - userLine.p1.x);
+                const dy = Math.abs(pos.y - userLine.p1.y);
+                if (dx > dy) {
+                    userLine.p2 = { x: snapToGrid(pos.x), y: userLine.p1.y };
+                } else {
+                    userLine.p2 = { x: userLine.p1.x, y: snapToGrid(pos.y) };
+                }
+                drawInitialScene();
+                const suggestionColor = getComputedStyle(document.documentElement).getPropertyValue('--suggestion-color');
+                drawLineWithLabel(userLine, suggestionColor, "Çizimin", true);
+            }
+            
+            function stopDrawing() {
+                if (!isDrawing) return;
+                isDrawing = false;
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                drawGrid();
+                const userLength = calculateLength(userLine.p1, userLine.p2);
+                const successColor = getComputedStyle(document.documentElement).getPropertyValue('--success-color');
+                const errorColor = getComputedStyle(document.documentElement).getPropertyValue('--error-color');
+                const primaryColor = getComputedStyle(document.documentElement).getPropertyValue('--primary-color');
+
+                if (Math.abs(userLength - targetLine.length) <= tolerance) {
+                    isTaskSuccessful = true;
+                    playSuccessSound();
+                    feedbackEl.style.color = successColor;
+                    actionButton.className = 'btn success';
+                    if (currentStage < totalStages) {
+                        feedbackEl.textContent = 'Harika! Uzunluklar eşit.';
+                        actionButton.textContent = 'Sonraki Görev';
+                    } else {
+                        feedbackEl.textContent = 'Tebrikler! Etkinliği tamamladın.';
+                        actionButton.textContent = 'Baştan Başla';
+                    }
+                    drawLineWithLabel(targetLine, primaryColor, "Hedef", true);
+                    drawLineWithLabel(userLine, successColor, "Çizimin", true);
+                } else {
+                    playErrorSound();
+                    feedbackEl.style.color = errorColor;
+                    if (userLength > targetLine.length) { feedbackEl.textContent = 'Çizimin hedeften biraz uzun oldu.'; }
+                    else { feedbackEl.textContent = 'Çizimin hedeften biraz kısa kaldı.'; }
+                    drawLineWithLabel(targetLine, primaryColor, "Hedef", true);
+                    drawLineWithLabel(userLine, errorColor, "Çizimin", true);
+                }
+            }
+
+            function handleAction() {
+                playClickSound();
+                if (isTaskSuccessful) {
+                    if (currentStage < totalStages) { 
+                        currentStage++; 
+                    } else { 
+                        currentStage = 1; 
+                        setupStages(); // Yeniden başlarken yeni rastgele görevler oluştur
+                    }
+                }
+                setupStage(currentStage);
+            }
+
+            function resizeAndInit() {
+                const parentWidth = document.getElementById('activityScreen').clientWidth;
+                const canvasWidth = parentWidth > 500 ? 500 : parentWidth - 2;
+                canvas.width = canvasWidth;
+                canvas.height = canvasWidth; 
+                setupStages();
+                setupStage(currentStage);
+            }
+            
+            initAudio();
+            resizeAndInit();
+
+            canvas.addEventListener('mousedown', startDrawing);
+            canvas.addEventListener('mousemove', draw);
+            window.addEventListener('mouseup', stopDrawing);
+            canvas.addEventListener('touchstart', startDrawing, { passive: false });
+            canvas.addEventListener('touchmove', draw, { passive: false });
+            window.addEventListener('touchend', stopDrawing);
+            actionButton.addEventListener('click', handleAction);
+            window.addEventListener('resize', resizeAndInit);
+        });
+    </script>
+
+</body>
+</html>
