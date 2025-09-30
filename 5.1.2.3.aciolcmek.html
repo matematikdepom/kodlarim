@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Eş Açıları Bulalım</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
+    <style>
+        /* Benzersiz ad alanı ile CSS izolasyonu */
+        .angle-finder {
+            --primary-color: #1E88E5; /* Modern mavi */
+            --success-color: #43A047; /* Canlı yeşil */
+            --suggestion-color: #FFB300; /* Yumuşak sarı */
+            --error-color: #E53935; /* Modern kırmızı */
+            --bg-color: #E3F2FD; /* Açık, ferah arka plan */
+            --container-bg: #FFFFFF; /* Temiz beyaz */
+            --text-color: #1A1A1A; /* Koyu, okunabilir metin */
+            --border-color: #B0BEC5; /* Hafif gri ton */
+            --shadow-color: rgba(0, 0, 0, 0.15);
+            --protractor-color: #0288D1; /* Açıölçer için modern naber mavisi */
+        }
+
+        .angle-finder, .angle-finder * {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+            box-sizing: border-box;
+        }
+
+        .angle-finder body, .angle-finder html {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            width: 100%;
+            margin: 0;
+            background-color: var(--bg-color);
+            overflow: hidden;
+            user-select: none;
+            color: var(--text-color);
+        }
+
+        .angle-finder .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+            padding: 20px;
+            width: 100%;
+            max-width: 960px;
+            background: var(--container-bg);
+            border-radius: 16px;
+            box-shadow: 0 4px 20px var(--shadow-color);
+        }
+
+        .angle-finder .author {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            font-size: 1rem;
+            color: var(--text-color);
+            opacity: 0.8;
+            font-weight: 500;
+        }
+
+        .angle-finder #start-screen {
+            text-align: center;
+            animation: fadeIn 1s ease-in;
+        }
+
+        .angle-finder #start-screen h1 {
+            font-size: 2.8em;
+            color: var(--primary-color);
+            margin-bottom: 20px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        .angle-finder #start-screen p {
+            font-size: 1.2em;
+            color: var(--text-color);
+            opacity: 0.9;
+            max-width: 600px;
+            margin: 0 auto 20px;
+        }
+
+        .angle-finder #activity-screen {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            gap: 20px;
+        }
+
+        .angle-finder #instructionText {
+            font-size: 1.3em;
+            font-weight: 500;
+            text-align: center;
+            max-width: 800px;
+            line-height: 1.6;
+            min-height: 60px;
+            color: var(--text-color);
+            background: rgba(255, 255, 255, 0.8);
+            padding: 10px 20px;
+            border-radius: 8px;
+        }
+
+        .angle-finder .stage {
+            width: 90vw;
+            height: 50vw;
+            max-width: 800px;
+            max-height: 450px;
+            border: 2px dashed var(--border-color);
+            background-color: var(--container-bg);
+            position: relative;
+            overflow: hidden;
+            background-image: linear-gradient(rgba(0, 0, 0, 0.05) 1px, transparent 1px),
+                            linear-gradient(90deg, rgba(0, 0, 0, 0.05) 1px, transparent 1px);
+            background-size: 20px 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px var(--shadow-color);
+        }
+
+        .angle-finder .vertical-divider {
+            position: absolute;
+            left: 50%;
+            top: 10px;
+            bottom: 10px;
+            border-left: 2px dashed var(--border-color);
+            pointer-events: none;
+        }
+
+        .angle-finder #angleCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        .angle-finder #protractor-container {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            width: 300px;
+            height: 150px;
+            cursor: grab;
+            transform-origin: 50% 95%;
+            will-change: transform;
+            transition: opacity 0.3s ease, transform 0.1s ease;
+        }
+
+        .angle-finder #pivot-point {
+            position: absolute;
+            top: 95%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 1px;
+            height: 1px;
+            pointer-events: none;
+        }
+
+        .angle-finder #protractor-container.dragging {
+            z-index: 10;
+            opacity: 0.95;
+            cursor: grabbing;
+        }
+
+        .angle-finder #protractor-svg {
+            width: 100%;
+            height: 100%;
+            opacity: 0.9;
+            filter: drop-shadow(0 2px 4px var(--shadow-color));
+        }
+
+        .angle-finder #protractor-svg path.protractor-fill {
+            fill: var(--protractor-color);
+            opacity: 0.85;
+        }
+
+        .angle-finder #protractor-container.is-snapped .pivot-circle {
+            stroke: var(--success-color);
+            stroke-width: 5;
+            fill: #fff;
+        }
+
+        .angle-finder #protractor-container.is-aligned .baseline {
+            stroke: var(--success-color);
+            stroke-width: 14;
+        }
+
+        .angle-finder #rotate-handle {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            width: 40px;
+            height: 40px;
+            background-color: var(--primary-color);
+            color: white;
+            border: 3px solid #fff;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            font-weight: 700;
+            cursor: move;
+            z-index: 12;
+            box-shadow: 0 3px 8px var(--shadow-color);
+            transition: background-color 0.3s ease, transform 0.2s ease;
+        }
+
+        .angle-finder #rotate-handle:hover {
+            transform: scale(1.1);
+        }
+
+        .angle-finder #rotate-handle.disabled {
+            background-color: #78909C;
+            cursor: not-allowed;
+        }
+
+        .angle-finder .controls-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .angle-finder .guess-boxes {
+            display: flex;
+            gap: 25px;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .angle-finder .guess-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.3em;
+            font-weight: 600;
+            color: var(--text-color);
+        }
+
+        .angle-finder .angle-hat {
+            position: relative;
+            display: inline-block;
+        }
+
+        .angle-finder .angle-hat::before {
+            content: '^';
+            position: absolute;
+            top: -14px;
+            left: 50%;
+            transform: translateX(-50%) scaleX(3.5);
+            font-size: 1em;
+            font-weight: normal;
+            color: var(--primary-color);
+        }
+
+        .angle-finder .guess-container input {
+            width: 90px;
+            padding: 10px;
+            font-size: 1.2em;
+            text-align: center;
+            border: 2px solid var(--border-color);
+            border-radius: 10px;
+            background: #F5F7FA;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .angle-finder .guess-container input:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(30, 136, 229, 0.2);
+            outline: none;
+        }
+
+        .angle-finder .guess-container input::-webkit-outer-spin-button,
+        .angle-finder .guess-container input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        .angle-finder .guess-container input {
+            -moz-appearance: textfield;
+        }
+
+        .angle-finder .btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 14px 28px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1.2em;
+            font-weight: 600;
+            transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
+            box-shadow: 0 3px 8px var(--shadow-color);
+        }
+
+        .angle-finder .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 12px var(--shadow-color);
+        }
+
+        .angle-finder #checkBtn {
+            margin-top: 15px;
+            background-color: var(--success-color);
+        }
+
+        .angle-finder .popup-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.65);
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+
+        .angle-finder .popup-content {
+            background: var(--container-bg);
+            padding: 35px;
+            border-radius: 16px;
+            text-align: center;
+            box-shadow: 0 6px 20px var(--shadow-color);
+            max-width: 90%;
+            width: 450px;
+            animation: popIn 0.3s ease-out;
+        }
+
+        .angle-finder #popup-message {
+            margin: 0 0 30px 0;
+            font-size: 1.3em;
+            line-height: 1.6;
+            color: var(--text-color);
+        }
+
+        /* Animasyonlar */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes popIn {
+            from { transform: scale(0.8); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        /* Mobil uyumluluk */
+        @media (max-width: 768px) {
+            .angle-finder .container {
+                padding: 15px;
+                border-radius: 12px;
+            }
+
+            .angle-finder #protractor-container {
+                width: 200px;
+                height: 100px;
+            }
+
+            .angle-finder #rotate-handle {
+                width: 34px;
+                height: 34px;
+                font-size: 20px;
+                top: 12px;
+                right: 12px;
+            }
+
+            .angle-finder #instructionText {
+                min-height: 48px;
+                font-size: 1.1em;
+                padding: 8px 15px;
+            }
+
+            .angle-finder #start-screen h1 {
+                font-size: 2.2em;
+            }
+
+            .angle-finder .btn {
+                padding: 12px 24px;
+                font-size: 1.1em;
+            }
+
+            .angle-finder .guess-container input {
+                width: 80px;
+                font-size: 1.1em;
+            }
+
+            .angle-finder .popup-content {
+                width: 90%;
+                padding: 25px;
+            }
+        }
+    </style>
+    <script src="scorm_api.js"></script>
+</head>
+<body class="angle-finder">
+    <div class="angle-finder">
+        <div class="author">Hazırlayan: Osman Aydoğdu</div>
+        <div class="container">
+            <div id="start-screen">
+                <h1>Eş Açıları Bulalım</h1>
+                <p>Merhaba! Bu etkinlikte açıları ölçerek hangi açıların eş olduğunu keşfedeceğiz. Haydi başlayalım!</p>
+                <button id="startBtn" class="btn">Başla</button>
+            </div>
+            
+            <div id="activity-screen">
+                <p id="instructionText"></p>
+                <div class="stage" id="stage">
+                    <div class="vertical-divider"></div>
+                    <canvas id="angleCanvas"></canvas>
+                    <div id="protractor-container" draggable="false">
+                        <div id="pivot-point"></div>
+                        <div id="rotate-handle">↻</div>
+                        <svg id="protractor-svg" viewBox="0 0 1000 500" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
+                            <path class="protractor-fill" d="M 50 475 A 450 450 0 0 1 950 475 L 950 485 H 50 Z" />
+                            <path d="M 125 475 A 375 375 0 0 1 875 475" stroke="#212121" stroke-width="2" fill="none" />
+                            <g font-family="'Inter', Arial, sans-serif" font-size="36" font-weight="500" fill="#000" text-anchor="middle">
+                                <script>
+                                    const svgNS="http://www.w3.org/2000/svg",g=document.currentScript.parentNode;
+                                    for(let i=0;i<=180;i+=5){
+                                        const t=i*Math.PI/180,e=Math.cos(t),a=Math.sin(t);
+                                        let n=i%10==0?30:20;
+                                        const s=document.createElementNS(svgNS,"line");
+                                        s.setAttribute("x1",500-450*e);s.setAttribute("y1",475-450*a);
+                                        s.setAttribute("x2",500-(450-n)*e);s.setAttribute("y2",475-(450-n)*a);
+                                        s.setAttribute("stroke","#212121");s.setAttribute("stroke-width",i%10===0?"2.5":"1.5");
+                                        g.appendChild(s);
+                                        if(i%10===0){
+                                            const n=document.createElementNS(svgNS,"text");
+                                            n.setAttribute("x",500-405*e);
+                                            const y1=(0===i||180===i)?490:475-405*a+10;
+                                            n.setAttribute("y",y1);n.textContent=i;
+                                            n.setAttribute("fill",i===0||i===180?"#0288D1":"#000");
+                                            g.appendChild(n);
+                                            if(90!==i){
+                                                const t=document.createElementNS(svgNS,"text");
+                                                t.setAttribute("x",500-335*e);
+                                                const y2=(0===180-i||180===180-i)?490:475-335*a+10;
+                                                t.setAttribute("y",y2);t.textContent=180-i;
+                                                t.setAttribute("fill",i===0||i===180?"#0288D1":"#000");
+                                                g.appendChild(t);
+                                            }
+                                        }
+                                    }
+                                </script>
+                                <line class="baseline" x1="50" y1="475" x2="950" y2="475" stroke="#212121" stroke-width="10" />
+                                <circle class="pivot-circle" cx="500" cy="475" r="10" fill="white" stroke="#212121" stroke-width="2.5" />
+                                <line x1="500" y1="475" x2="500" y2="440" stroke="#212121" stroke-width="2.5" />
+                            </g>
+                        </svg>
+                    </div>
+                </div>
+                <div class="controls-container">
+                    <div class="guess-boxes">
+                        <div class="guess-container"><span id="angle1Label"></span><input type="number" id="angle1GuessInput" min="0" max="180"></div>
+                        <div class="guess-container"><span id="angle2Label"></span><input type="number" id="angle2GuessInput" min="0" max="180"></div>
+                    </div>
+                    <button id="checkBtn" class="btn">Kontrol Et</button>
+                </div>
+            </div>
+        </div>
+        
+        <div id="popup" class="popup-overlay">
+            <div class="popup-content">
+                <p id="popup-message"></p>
+                <button id="popup-btn" class="btn"></button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // DOM Elements
+            const startScreen = document.getElementById('start-screen'), activityScreen = document.getElementById('activity-screen'), instructionText = document.getElementById('instructionText'), stage = document.getElementById('stage'), angleCanvas = document.getElementById('angleCanvas'), ctx = angleCanvas.getContext('2d'), protractor = document.getElementById('protractor-container'), rotateHandle = document.getElementById('rotate-handle'), pivotPoint = document.getElementById('pivot-point'), checkBtn = document.getElementById('checkBtn'), angle1Label = document.getElementById('angle1Label'), angle1GuessInput = document.getElementById('angle1GuessInput'), angle2Label = document.getElementById('angle2Label'), angle2GuessInput = document.getElementById('angle2GuessInput'), popup = document.getElementById('popup'), popupMessage = document.getElementById('popup-message'), popupBtn = document.getElementById('popup-btn');
+
+            // State Variables
+            let angle1 = {}, angle2 = {}, protractorState = { x: 20, y: 20, rotation: 0 }, interactionMode = null, dragStart = {}, rotationStart = {}, snappedToAngle = null, isAligned = false;
+            const snapTolerance = 25, alignmentTolerance = 3, allowedAngles = [50, 60, 70, 80, 90, 100, 110];
+            let lastWindowWidth = window.innerWidth;
+
+            let isAudioInitialized = false;
+            const sounds = {
+                click: new Tone.Synth({ oscillator: { type: "sine" }, envelope: { attack: 0.005, decay: 0.1, sustain: 0, release: 0.1 } }).toDestination(),
+                success: new Tone.Synth({ oscillator: { type: "triangle" }, envelope: { attack: 0.005, decay: 0.2, sustain: 0.1, release: 0.2 } }).toDestination(),
+                error: new Tone.Synth({ oscillator: { type: "square" }, envelope: { attack: 0.01, decay: 0.2, sustain: 0, release: 0.2 } }).toDestination(),
+            };
+
+            const updateInstruction = (text) => { instructionText.innerHTML = text; };
+
+            function resetProtractorState() {
+                snappedToAngle = null;
+                isAligned = false;
+                protractor.classList.remove('is-snapped', 'is-aligned');
+                rotateHandle.classList.remove('disabled');
+                updateInstruction("Açıölçerin merkezini, açının köşesine yerleştir.");
+            }
+
+            function setupNewRound() {
+                hidePopup();
+                protractorState = { x: 20, y: 20, rotation: 0 };
+                angle1GuessInput.value = ""; angle2GuessInput.value = "";
+                updateProtractorTransform(); protractor.style.cursor = 'grab';
+                resetProtractorState();
+                const rect = stage.getBoundingClientRect();
+                angleCanvas.width = rect.width; angleCanvas.height = rect.height;
+                const areCongruent = Math.random() < 0.5, getRandomAngle = () => allowedAngles[Math.floor(Math.random() * allowedAngles.length)];
+                let angleValue1 = getRandomAngle(), angleValue2;
+                if (areCongruent) { angleValue2 = angleValue1; } else { do { angleValue2 = getRandomAngle(); } while (Math.abs(angleValue1 - angleValue2) < 20); }
+                angle1 = generateAngleConfig(angleValue1, rect, 'left');
+                angle2 = generateAngleConfig(angleValue2, rect, 'right');
+                angle1Label.innerHTML = `m(<span class="angle-hat">${angle1.points.p1}${angle1.points.vertex}${angle1.points.p2}</span>) =`;
+                angle2Label.innerHTML = `m(<span class="angle-hat">${angle2.points.p1}${angle2.points.vertex}${angle2.points.p2}</span>) =`;
+                drawAngles();
+            }
+            
+            function generateAngleConfig(angleDegrees, stageRect, position) {
+                const chars = "ABCDEFGHKLMNOPRSTUVYZ";
+                let p1 = "", v = "", p2 = ""; 
+                p1 = chars.charAt(Math.floor(Math.random() * chars.length)); 
+                do { v = chars.charAt(Math.floor(Math.random() * chars.length)); } while (v === p1); 
+                do { p2 = chars.charAt(Math.floor(Math.random() * chars.length)); } while (p2 === p1 || p2 === v);
+                
+                let paddingFromBottom = Math.min(stageRect.height * 0.1, 40);
+                
+                if (window.innerWidth <= 768) {
+                    paddingFromBottom += 25;
+                }
+
+                let vertexX, vertexY;
+                vertexY = stageRect.height - paddingFromBottom;
+                if (position === 'left') { vertexX = stageRect.width / 4; } 
+                else { vertexX = stageRect.width * 3 / 4; }
+
+                const baseRotation = 15 + Math.random() * (150 - angleDegrees);
+                return { points: {p1, vertex: v, p2}, degrees: angleDegrees, vertex: { x: vertexX, y: vertexY }, baseRotation };
+            }
+            
+            function drawAngles() {
+                ctx.clearRect(0, 0, angleCanvas.width, angleCanvas.height);
+                drawSingleAngle(angle1); drawSingleAngle(angle2);
+            }
+            
+            function drawSingleAngle(angleData) {
+                const { vertex, degrees, baseRotation, points } = angleData;
+                drawRay(vertex, baseRotation, points.p1); drawRay(vertex, baseRotation + degrees, points.p2);
+                const startRad = -((baseRotation + degrees) * Math.PI / 180), endRad = -(baseRotation * Math.PI / 180);
+                ctx.beginPath(); ctx.arc(vertex.x, vertex.y, 25, startRad, endRad); ctx.strokeStyle = '#D81B60'; ctx.lineWidth = 2.5; ctx.stroke();
+                ctx.beginPath(); ctx.arc(vertex.x, vertex.y, 5, 0, 2 * Math.PI); ctx.fillStyle = 'black'; ctx.fill();
+                ctx.font = 'bold 20px Inter'; 
+                ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+                ctx.fillText(points.vertex, vertex.x, vertex.y + 10); 
+            }
+
+            function drawRay(vertex, angleDeg, pointName) {
+                const rayLength = Math.min(stage.clientWidth, stage.clientHeight) * 0.4, rad = angleDeg * Math.PI / 180, dx = Math.cos(rad), dy = -Math.sin(rad), endX = vertex.x + rayLength * dx, endY = vertex.y + rayLength * dy;
+                ctx.beginPath(); ctx.moveTo(vertex.x, vertex.y); ctx.lineTo(endX, endY); ctx.strokeStyle = 'black'; ctx.lineWidth = 3; ctx.stroke();
+                const headlen = 12, angle = Math.atan2(dy, dx);
+                ctx.beginPath(); ctx.moveTo(endX, endY); ctx.lineTo(endX - headlen * Math.cos(angle - Math.PI / 7), endY - headlen * Math.sin(angle - Math.PI / 7)); ctx.moveTo(endX, endY); ctx.lineTo(endX - headlen * Math.cos(angle + Math.PI / 7), endY - headlen * Math.sin(angle + Math.PI / 7)); ctx.stroke();
+                const dotOnLineX = vertex.x + (rayLength - 25) * dx, dotOnLineY = vertex.y + (rayLength - 25) * dy;
+                ctx.beginPath();
+                ctx.arc(dotOnLineX, dotOnLineY, 3, 0, 2 * Math.PI); 
+                ctx.fillStyle = 'black'; ctx.fill();
+                const textX = dotOnLineX - dy * 22, textY = dotOnLineY + dx * 22;
+                ctx.font = 'bold 20px Inter';
+                ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = 'black'; ctx.fillText(pointName, textX, textY);
+            }
+            
+            function updateProtractorTransform() { protractor.style.transform = `translate(${protractorState.x}px, ${protractorState.y}px) rotate(${protractorState.rotation}deg)`; }
+            function getPivotScreenPos() { const rect = pivotPoint.getBoundingClientRect(); return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 }; }
+            
+            function onInteractionStart(e, mode) {
+                if (interactionMode || (mode === 'rotating' && isAligned)) return;
+                interactionMode = mode; protractor.classList.add('dragging');
+                const event = e.touches ? e.touches[0] : e;
+                if (mode === 'dragging') {
+                    resetProtractorState();
+                    dragStart = { mouseX: event.clientX, mouseY: event.clientY, stateX: protractorState.x, stateY: protractorState.y };
+                } else {
+                    e.stopPropagation(); const pivot = getPivotScreenPos();
+                    rotationStart = { angle: Math.atan2(event.clientY - pivot.y, event.clientX - pivot.x) * 180 / Math.PI, rotation: protractorState.rotation };
+                }
+            }
+
+            function onInteractionMove(e) {
+                if (!interactionMode) return; e.preventDefault();
+                const event = e.touches ? e.touches[0] : e;
+                if (interactionMode === 'dragging') { protractorState.x = dragStart.stateX + (event.clientX - dragStart.mouseX); protractorState.y = dragStart.stateY + (event.clientY - dragStart.mouseY); }
+                else { const pivot = getPivotScreenPos(); const currentAngleValue = Math.atan2(event.clientY - pivot.y, event.clientX - pivot.x) * 180 / Math.PI; protractorState.rotation = rotationStart.rotation + (currentAngleValue - rotationStart.angle); }
+                updateProtractorTransform();
+            }
+
+            function onInteractionEnd() {
+                if (!interactionMode) return;
+                protractor.classList.remove('dragging');
+                if (interactionMode === 'dragging') { checkAndSnapToVertex(); } else { checkAndAlignAngle(); }
+                interactionMode = null;
+            }
+
+            function checkAndSnapToVertex() {
+                const pivotPos = getPivotScreenPos(); const stageRect = stage.getBoundingClientRect();
+                const check = (angle, id) => {
+                    const vertexScreenPos = { x: stageRect.left + angle.vertex.x, y: stageRect.top + angle.vertex.y };
+                    if (Math.hypot(pivotPos.x - vertexScreenPos.x, pivotPos.y - vertexScreenPos.y) < snapTolerance) {
+                        protractorState.x += vertexScreenPos.x - pivotPos.x; protractorState.y += vertexScreenPos.y - pivotPos.y;
+                        updateProtractorTransform(); protractor.style.cursor = 'default';
+                        snappedToAngle = { data: angle, id: id };
+                        protractor.classList.add('is-snapped');
+                        updateInstruction("Harika! Şimdi açıölçeri döndürerek bir ışınla sıfır (0) çizgisini hizala.");
+                        return true;
+                    } return false;
+                };
+                if (!check(angle1, 1) && !check(angle2, 2)) { resetProtractorState(); protractor.style.cursor = 'grab'; }
+            }
+            
+            function checkAndAlignAngle() {
+                if (!snappedToAngle) return;
+                const angle = snappedToAngle.data;
+                const targets = [-angle.baseRotation, -angle.baseRotation + 180, -(angle.baseRotation + angle.degrees), -(angle.baseRotation + angle.degrees) + 180];
+                const getDist = (a, b) => { const d = Math.abs(a - b) % 360; return Math.min(d, 360 - d); };
+                for (const target of targets) {
+                    if (getDist(protractorState.rotation, target) < alignmentTolerance) {
+                        protractorState.rotation = target; isAligned = true;
+                        protractor.classList.add('is-aligned'); rotateHandle.classList.add('disabled');
+                        updateProtractorTransform(); updateInstruction("Süper! Açıölçerden doğru ölçümü okuyup yaz.");
+                        break;
+                    }
+                }
+            }
+            
+            function checkGuesses() {
+                sounds.click.triggerAttackRelease("C4", "8n");
+                const guess1 = parseInt(angle1GuessInput.value, 10), guess2 = parseInt(angle2GuessInput.value, 10);
+                if (isNaN(guess1) || isNaN(guess2)) { showPopup("Lütfen her iki açı için bir değer gir.", "Tekrar Dene", hidePopup, 'var(--suggestion-color)'); return; }
+                if (guess1 === angle1.degrees && guess2 === angle2.degrees) {
+                    sounds.success.triggerAttackRelease("C5", "8n", Tone.now() + 0.1);
+                    const msg = angle1.degrees === angle2.degrees ? `Tebrikler! İkisini de doğru ölçtün. Açılar ${angle1.degrees}° olduğu için <b>eş açılardır.</b>` : `Tebrikler! İkisini de doğru ölçtün. Açılar ${angle1.degrees}° ve ${angle2.degrees}° olduğu için <b>eş açılar değildir.</b>`;
+                    showPopup(msg, "Yeni Etkinlik", setupNewRound, 'var(--success-color)');
+                } else {
+                    sounds.error.triggerAttackRelease("C3", "8n", Tone.now() + 0.1);
+                    showPopup("Tam olmadı. Açıları dikkatli ölç ve tekrar dene.", "Tekrar Dene", hidePopup, 'var(--error-color)');
+                }
+            }
+
+            function showPopup(message, btnText, btnAction, btnColor) {
+                popupMessage.innerHTML = message; popupBtn.textContent = btnText;
+                popupBtn.onclick = () => { sounds.click.triggerAttackRelease("A3", "8n"); btnAction(); };
+                popupBtn.style.backgroundColor = btnColor; popup.style.display = 'flex';
+            }
+
+            function hidePopup() { popup.style.display = 'none'; }
+            
+            function initializeEventListeners() {
+                startBtn.addEventListener('click', async () => { 
+                    if (!isAudioInitialized) { await Tone.start(); isAudioInitialized = true; } 
+                    sounds.click.triggerAttackRelease("C4", "8n"); 
+                    startScreen.style.display = 'none'; 
+                    activityScreen.style.display = 'flex'; 
+                    setupNewRound(); 
+                });
+                checkBtn.addEventListener('click', checkGuesses);
+                protractor.addEventListener('mousedown', (e) => onInteractionStart(e, 'dragging'));
+                rotateHandle.addEventListener('mousedown', (e) => onInteractionStart(e, 'rotating'));
+                window.addEventListener('mousemove', onInteractionMove); 
+                window.addEventListener('mouseup', onInteractionEnd);
+                protractor.addEventListener('touchstart', (e) => { e.preventDefault(); onInteractionStart(e, 'dragging'); }, { passive: false });
+                rotateHandle.addEventListener('touchstart', (e) => { e.preventDefault(); onInteractionStart(e, 'rotating'); }, { passive: false });
+                window.addEventListener('touchmove', onInteractionMove, { passive: false }); 
+                window.addEventListener('touchend', onInteractionEnd, { passive: false });
+                
+                window.addEventListener('resize', () => {
+                    const currentWindowWidth = window.innerWidth;
+                    if (currentWindowWidth !== lastWindowWidth) {
+                        if(activityScreen.style.display === 'flex') {
+                            setupNewRound();
+                        }
+                    }
+                    lastWindowWidth = currentWindowWidth;
+                });
+            }
+
+            initializeEventListeners();
+        });
+    </script>
+</body>
+</html>

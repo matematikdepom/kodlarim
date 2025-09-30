@@ -1,0 +1,442 @@
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Geometrik Desen Atölyesi</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary-color: #4f46e5; /* Modern mor ton */
+            --secondary-color: #059669; /* Canlı yeşil */
+            --accent-color: #d946ef; /* Canlı pembe aksan */
+            --background-color: #f9fafb; /* Hafif gri arka plan */
+            --panel-bg-color: #ffffff; /* Beyaz panel */
+            --text-color: #111827; /* Koyu gri metin */
+            --border-color: #e5e7eb; /* Hafif gri sınır */
+            --selection-color: rgba(79, 70, 229, 0.15); /* Hafif mor seçim */
+            --mobile-action-bar-height: 70px;
+        }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        html, body { font-family: 'Inter', sans-serif; margin: 0; background-color: var(--background-color); color: var(--text-color); height: 100%; width: 100%; overflow: hidden; }
+
+        .container { display: flex; flex-direction: row; width: 100%; height: 100%; background-color: var(--panel-bg-color); }
+        .controls-panel { width: 320px; min-width: 300px; flex-shrink: 0; padding: 20px; background-color: var(--panel-bg-color); border-right: 1px solid var(--border-color); display: flex; flex-direction: column; overflow-y: auto; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .controls-panel h1 { font-size: 1.75rem; color: var(--primary-color); margin: 0 0 8px 0; }
+        .controls-panel .author { font-size: 0.9rem; color: #6b7280; margin-bottom: 15px; }
+        #info-panel { background-color: #eef2ff; border-left: 4px solid var(--primary-color); padding: 12px; font-size: 0.9rem; border-radius: 6px; margin-bottom: 20px; }
+
+        .tabs { display: flex; border-bottom: 1px solid var(--border-color); margin-bottom: 20px; }
+        .tab { flex: 1; padding: 12px; text-align: center; cursor: pointer; font-weight: 600; background: #f1f5f9; border-top-left-radius: 8px; border-top-right-radius: 8px; border: 1px solid var(--border-color); border-bottom: none; margin-bottom: -1px; transition: all 0.2s; }
+        .tab.active { background: var(--panel-bg-color); color: var(--primary-color); border-bottom: 1px solid var(--panel-bg-color); }
+
+        .tab-content { display: none; flex-direction: column; gap: 15px; }
+        .tab-content.active { display: flex; }
+
+        .control-group { display: flex; flex-direction: column; gap: 8px; }
+        label { font-weight: 600; font-size: 0.95rem; color: #4b5563; }
+        .shape-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .shape-buttons button { padding: 12px; font-family: 'Inter', sans-serif; font-weight: 600; border: 2px solid var(--border-color); background-color: #fff; border-radius: 8px; cursor: pointer; transition: all 0.2s; }
+        .shape-buttons button:hover { background-color: #f3f4f6; }
+        button.active { background-color: var(--primary-color); color: white; border-color: var(--primary-color); }
+        input[type="range"] { -webkit-appearance: none; appearance: none; width: 100%; height: 6px; background: #e5e7eb; outline: none; border-radius: 4px; cursor: pointer; }
+        input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 18px; height: 18px; background: var(--primary-color); border-radius: 50%; box-shadow: 0 0 4px rgba(0,0,0,0.15); }
+        .color-pickers { display: flex; gap: 12px; }
+        .color-pickers > div { flex: 1; }
+        input[type="color"] { width: 100%; height: 36px; background-color: transparent; border: 1px solid var(--border-color); border-radius: 6px; cursor: pointer; padding: 0; }
+        input[type="color"]::-webkit-color-swatch { border-radius: 5px; border: none; }
+
+        #layers-list { max-height: 250px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: 8px; padding: 8px; background: #fff; }
+        .layer-item { display: flex; align-items: center; padding: 10px; border-radius: 6px; cursor: grab; background: #fff; margin-bottom: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); transition: background 0.2s; }
+        .layer-item.selected { background-color: #f5f3ff; border: 1px solid var(--primary-color); }
+        .layer-item span { flex-grow: 1; margin-left: 10px; font-weight: 600; }
+        .layer-actions { display: flex; gap: 8px; }
+        .layer-actions button { background: none; border: none; cursor: pointer; font-size: 1.1rem; padding: 5px; color: #6b7280; }
+        .layer-actions button:hover { color: var(--text-color); }
+
+        .main-actions { margin-top: auto; display: flex; flex-direction: column; gap: 12px; padding-top: 20px; border-top: 1px solid var(--border-color); }
+        .main-actions .row { display: flex; gap: 10px; }
+        .main-actions .row button { flex: 1; }
+        .main-actions button { background-color: var(--primary-color); color: white; border: none; padding: 12px; font-size: 0.95rem; border-radius: 8px; transition: all 0.2s; cursor: pointer; font-weight: 600; }
+        .main-actions button:hover { background-color: #4338ca; }
+        #pattern-button { background-color: var(--secondary-color); }
+        #pattern-button:hover { background-color: #047857; }
+        #reset-button { background-color: #6b7280; }
+        #reset-button:hover { background-color: #4b5563; }
+        #save-button { background-color: var(--accent-color); }
+        #save-button:hover { background-color: #c026d3; }
+
+        #drawing-canvas { flex-grow: 1; background-color: var(--panel-bg-color); cursor: crosshair; }
+        .mobile-actions-bar { display: none; }
+
+        .welcome-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(0, 0, 0, 0.6); z-index: 1000;
+            display: flex; justify-content: center; align-items: center;
+            opacity: 0; visibility: hidden; transition: all 0.3s ease;
+        }
+        .welcome-overlay.visible { opacity: 1; visibility: visible; }
+
+        .welcome-modal {
+            background: var(--panel-bg-color); padding: 30px; border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.2); text-align: center; max-width: 480px; width: 90%;
+            transform: scale(0.9); transition: all 0.3s ease;
+        }
+        .welcome-overlay.visible .welcome-modal { transform: scale(1); }
+
+        .welcome-modal h2 { font-size: 1.9rem; color: var(--primary-color); margin-top: 0; }
+        .welcome-modal p { font-size: 1rem; color: #4b5563; line-height: 1.5; }
+        .welcome-modal ul { list-style: none; padding: 0; text-align: left; margin: 20px 0; }
+        .welcome-modal ul li { margin-bottom: 12px; font-size: 1rem; display: flex; align-items: center; }
+        .welcome-modal ul li span { margin-right: 12px; font-size: 1.4rem; }
+
+        #start-button {
+            background-color: var(--secondary-color); color: white; border: none;
+            padding: 12px 30px; font-size: 1.1rem; font-weight: 600;
+            border-radius: 8px; cursor: pointer; transition: all 0.2s;
+        }
+        #start-button:hover { background-color: #047857; transform: scale(1.03); }
+
+        @media (max-width: 900px) {
+            .container { flex-direction: column; }
+            .controls-panel { position: fixed; bottom: 0; left: 0; width: 100%; max-height: 80%; border-top: 1px solid var(--border-color); box-shadow: 0 -4px 12px rgba(0,0,0,0.1); border-radius: 12px 12px 0 0; transform: translateY(100%); z-index: 100; transition: transform 0.3s ease-in-out; }
+            .controls-panel.show { transform: translateY(0); }
+            #drawing-canvas { height: 100%; width: 100%; }
+
+            .mobile-actions-bar { display: flex; position: fixed; bottom: 0; left: 0; width: 100%; height: var(--mobile-action-bar-height); background-color: var(--panel-bg-color); box-shadow: 0 -2px 8px rgba(0,0,0,0.1); align-items: center; justify-content: space-around; padding: 0 10px; z-index: 101; gap: 8px; }
+            .mobile-actions-bar button { flex-grow: 1; flex-basis: 0; height: 48px; font-size: 0.95rem; border-radius: 8px; background-color: var(--primary-color); color: white; border: none; font-weight: 600; }
+            .mobile-actions-bar button:hover { background-color: #4338ca; }
+            #mobile-pattern-button.active { background-color: var(--danger-color); }
+            #mobile-pattern-button.active:hover { background-color: #b91c1c; }
+        }
+    </style>
+</head>
+<body>
+    <div class="welcome-overlay visible" id="welcome-overlay">
+        <div class="welcome-modal">
+            <h2>Desen Atölyesi</h2>
+            <p>Hayalindeki geometrik desenleri kolayca oluşturabileceğin bu atölyede yaratıcılığını konuştur!</p>
+            <ul>
+                <li><span>🎨</span>Panelden şekil ve renk seçip tuvale tıkla.</li>
+                <li><span>🖱️</span>Çizdiğin şekle tıklayarak boyutunu ve stilini değiştir.</li>
+                <li><span>📑</span>Şekillerin sırasını sürükleyip bırakarak ayarla.</li>
+                <li><span>💠</span>"Desen Modu" ile eserini tüm tuvale yay.</li>
+            </ul>
+            <button id="start-button">Başla!</button>
+        </div>
+    </div>
+    
+    <div class="container">
+        <div class="controls-panel" id="controls-panel">
+            <h1>Desen Atölyesi</h1>
+            <div class="author">Hazırlayan: Osman AYDOĞDU</div>
+            <div class="tabs">
+                <div class="tab active" data-tab="shape-tab">Şekil</div>
+                <div class="tab" data-tab="style-tab">Stil</div>
+                <div class="tab" data-tab="layers-tab">Katmanlar</div>
+            </div>
+            <div id="shape-tab" class="tab-content active">
+                <div class="control-group">
+                    <label>Yeni Şekil:</label>
+                    <div class="shape-buttons">
+                        <button data-shape="circle" class="active">Çember</button>
+                        <button data-shape="square">Kare</button>
+                        <button data-shape="triangle">Üçgen</button>
+                        <button data-shape="pentagon">Beşgen</button>
+                        <button data-shape="hexagon">Altıgen</button>
+                        <button data-shape="star">Yıldız</button>
+                    </div>
+                </div>
+                <div id="size-setting-group" class="control-group">
+                    <label>Boyut: <span id="size-value">50</span></label>
+                    <input type="range" id="size-slider" min="5" max="200" value="50">
+                </div>
+                <div id="rotation-setting-group" class="control-group">
+                    <label>Döndürme: <span id="rotation-value">0</span>°</label>
+                    <input type="range" id="rotation-slider" min="0" max="360" value="0">
+                </div>
+            </div>
+            <div id="style-tab" class="tab-content">
+                <div class="control-group">
+                    <label>Renkler:</label>
+                    <div class="color-pickers">
+                        <div><label for="stroke-color-picker">Anahat</label><input type="color" id="stroke-color-picker" value="#111827"></div>
+                        <div><label for="fill-color-picker">Dolgu</label><input type="color" id="fill-color-picker" value="#d946ef"></div>
+                    </div>
+                </div>
+                <div class="control-group">
+                    <label>Çizgi Kalınlığı: <span id="line-width-value">4</span></label>
+                    <input type="range" id="line-width-slider" min="0" max="30" value="4">
+                </div>
+                <div class="control-group">
+                    <label>Opaklık: <span id="opacity-value">1</span></label>
+                    <input type="range" id="opacity-slider" min="0" max="1" step="0.05" value="1">
+                </div>
+                <div class="control-group">
+                    <label>Tuval Rengi:</label>
+                    <input type="color" id="bg-color-picker" value="#ffffff">
+                </div>
+            </div>
+            <div id="layers-tab" class="tab-content">
+                <label>Katmanlar (Sıralamak için sürükle):</label>
+                <div id="layers-list"></div>
+            </div>
+            <div class="main-actions">
+                <div class="row">
+                    <button id="undo-button">Geri Al</button>
+                    <button id="redo-button">İleri Al</button>
+                </div>
+                <button id="pattern-button">Desen Modu</button>
+                <button id="reset-button">Sıfırla</button>
+                <button id="save-button">Eserini Kaydet</button>
+            </div>
+        </div>
+        <canvas id="drawing-canvas" width="1906" height="953"></canvas>
+    </div>
+    
+    <div class="mobile-actions-bar">
+        <button id="mobile-controls-toggle">Kontroller</button>
+        <button id="mobile-pattern-button">Desenle</button>
+        <button id="mobile-reset-button">Sıfırla</button>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const canvas = document.getElementById('drawing-canvas'), ctx = canvas.getContext('2d');
+            const welcomeOverlay = document.getElementById('welcome-overlay');
+            const startButton = document.getElementById('start-button');
+            const elements = {
+                panel: document.getElementById('controls-panel'),
+                tabs: document.querySelectorAll('.tab'),
+                tabContents: document.querySelectorAll('.tab-content'),
+                shapeButtons: document.querySelectorAll('.shape-buttons button'),
+                sizeSlider: document.getElementById('size-slider'), sizeValue: document.getElementById('size-value'),
+                rotationSlider: document.getElementById('rotation-slider'), rotationValue: document.getElementById('rotation-value'),
+                strokePicker: document.getElementById('stroke-color-picker'),
+                fillPicker: document.getElementById('fill-color-picker'),
+                lineWidthSlider: document.getElementById('line-width-slider'), lineWidthValue: document.getElementById('line-width-value'),
+                opacitySlider: document.getElementById('opacity-slider'), opacityValue: document.getElementById('opacity-value'),
+                bgPicker: document.getElementById('bg-color-picker'),
+                layersList: document.getElementById('layers-list'),
+                infoPanel: document.getElementById('info-panel'),
+                patternBtn: document.getElementById('pattern-button'),
+                resetBtn: document.getElementById('reset-button'),
+                saveBtn: document.getElementById('save-button'),
+                undoBtn: document.getElementById('undo-button'),
+                redoBtn: document.getElementById('redo-button'),
+                mobileControlsBtn: document.getElementById('mobile-controls-toggle'),
+                mobilePatternBtn: document.getElementById('mobile-pattern-button'),
+                mobileResetBtn: document.getElementById('mobile-reset-button'),
+            };
+
+            let shapes = [], history = [], historyIndex = -1;
+            let currentShapeType = 'circle', selectedShape = null;
+            let isDragging = false, isPatternMode = false, isSelectingPattern = false;
+            let startX, startY, patternRect = {};
+            
+            const shapeTranslations = {
+                circle: 'Çember', square: 'Kare', triangle: 'Üçgen',
+                pentagon: 'Beşgen', hexagon: 'Altıgen', star: 'Yıldız'
+            };
+
+            const resizeCanvas = () => { canvas.width = canvas.offsetWidth; canvas.height = canvas.offsetHeight; redrawAllShapes(); }
+            window.addEventListener('resize', resizeCanvas); resizeCanvas();
+
+            function redrawAllShapes() {
+                ctx.fillStyle = elements.bgPicker.value; ctx.fillRect(0, 0, canvas.width, canvas.height);
+                shapes.forEach(shape => drawShape(shape));
+                if (isSelectingPattern) {
+                    ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--selection-color').trim();
+                    ctx.fillRect(patternRect.x, patternRect.y, patternRect.w, patternRect.h);
+                    ctx.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue('--primary-color').trim();
+                    ctx.lineWidth = 2; ctx.strokeRect(patternRect.x, patternRect.y, patternRect.w, patternRect.h);
+                }
+            }
+            
+            function drawShape(shape) {
+                ctx.save(); ctx.translate(shape.x, shape.y); ctx.rotate(shape.rotation * Math.PI / 180); ctx.globalAlpha = shape.opacity;
+                ctx.beginPath(); ctx.strokeStyle = shape.strokeColor; ctx.fillStyle = shape.fillColor; ctx.lineWidth = shape.lineWidth;
+                switch (shape.type) {
+                    case 'circle': ctx.arc(0, 0, shape.size, 0, Math.PI * 2); break;
+                    case 'square': ctx.rect(-shape.size / 2, -shape.size / 2, shape.size, shape.size); break;
+                    default:
+                        const sides = { triangle: 3, pentagon: 5, hexagon: 6, star: 5 }[shape.type];
+                        const angle = 2 * Math.PI / sides;
+                        if (shape.type === 'star') {
+                            const outerRadius = shape.size; const innerRadius = shape.size / 2.6;
+                            ctx.moveTo(0, -outerRadius);
+                            for (let i = 0; i < sides * 2; i++) {
+                                const r = (i % 2 === 0) ? outerRadius : innerRadius; const a = i * Math.PI / sides;
+                                ctx.lineTo(r * Math.sin(a), -r * Math.cos(a));
+                            }
+                        } else {
+                            const radius = shape.size; ctx.moveTo(radius, 0);
+                            for (let i = 1; i < sides; i++) { ctx.lineTo(radius * Math.cos(i * angle), radius * Math.sin(i * angle)); }
+                        }
+                        ctx.closePath();
+                }
+                ctx.fill(); if (ctx.lineWidth > 0) ctx.stroke(); ctx.restore();
+            }
+
+            elements.tabs.forEach(tab => tab.addEventListener('click', () => {
+                elements.tabs.forEach(t => t.classList.remove('active'));
+                elements.tabContents.forEach(c => c.classList.remove('active'));
+                tab.classList.add('active'); document.getElementById(tab.dataset.tab).classList.add('active');
+            }));
+
+            elements.shapeButtons.forEach(btn => btn.addEventListener('click', () => {
+                elements.shapeButtons.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active'); currentShapeType = btn.dataset.shape;
+            }));
+
+            function updateControlsForSelectedShape() {
+                if (!selectedShape) return;
+                elements.sizeSlider.value = selectedShape.size; elements.sizeValue.textContent = selectedShape.size;
+                elements.rotationSlider.value = selectedShape.rotation; elements.rotationValue.textContent = selectedShape.rotation;
+                elements.strokePicker.value = selectedShape.strokeColor;
+                elements.fillPicker.value = selectedShape.fillColor;
+                elements.lineWidthSlider.value = selectedShape.lineWidth; elements.lineWidthValue.textContent = selectedShape.lineWidth;
+                elements.opacitySlider.value = selectedShape.opacity; elements.opacityValue.textContent = selectedShape.opacity;
+            }
+
+            const handleControlChange = (e) => {
+                const { id, value } = e.target;
+                if (selectedShape) {
+                    switch (id) {
+                        case 'size-slider': selectedShape.size = +value; break;
+                        case 'rotation-slider': selectedShape.rotation = +value; break;
+                        case 'stroke-color-picker': selectedShape.strokeColor = value; break;
+                        case 'fill-color-picker': selectedShape.fillColor = value; break;
+                        case 'line-width-slider': selectedShape.lineWidth = +value; break;
+                        case 'opacity-slider': selectedShape.opacity = +value; break;
+                    }
+                    updateLayersList(); redrawAllShapes();
+                }
+                const spanId = id.replace('-slider', '-value').replace('-picker','');
+                if (document.getElementById(spanId)) document.getElementById(spanId).textContent = value;
+            };
+            ['input', 'change'].forEach(evt => { 
+                [elements.sizeSlider, elements.rotationSlider, elements.strokePicker, elements.fillPicker, elements.lineWidthSlider, elements.opacitySlider].forEach(el => el.addEventListener(evt, handleControlChange)); 
+            });
+            elements.bgPicker.addEventListener('input', redrawAllShapes);
+
+            function updateLayersList() {
+                elements.layersList.innerHTML = '';
+                [...shapes].reverse().forEach((shape, index) => {
+                    const i = shapes.length - 1 - index;
+                    const item = document.createElement('div'); item.className = 'layer-item'; item.dataset.index = i; item.draggable = true;
+                    if (shape === selectedShape) item.classList.add('selected');
+                    const shapeName = shapeTranslations[shape.type] || shape.type;
+                    item.innerHTML = `<span>${shapeName}</span><div class="layer-actions"><button data-action="delete">🗑️</button></div>`;
+                    item.addEventListener('click', () => selectShape(shape));
+                    item.querySelector('[data-action="delete"]').addEventListener('click', (e) => { e.stopPropagation(); shapes.splice(i, 1); saveState(); redrawAllShapes(); updateLayersList(); });
+                    item.addEventListener('dragstart', (e) => e.dataTransfer.setData('text/plain', i));
+                    item.addEventListener('dragover', (e) => e.preventDefault());
+                    item.addEventListener('drop', (e) => {
+                        e.preventDefault(); const fromIndex = parseInt(e.dataTransfer.getData('text/plain')), toIndex = i;
+                        if(fromIndex !== toIndex) { const [movedShape] = shapes.splice(fromIndex, 1); shapes.splice(toIndex, 0, movedShape); saveState(); redrawAllShapes(); updateLayersList(); }
+                    });
+                    elements.layersList.appendChild(item);
+                });
+            }
+
+            const getMousePos = e => ({ x: (e.touches ? e.touches[0].clientX : e.clientX) - canvas.getBoundingClientRect().left, y: (e.touches ? e.touches[0].clientY : e.clientY) - canvas.getBoundingClientRect().top });
+
+            function isPointInShape(x, y, shape) { const dx = x - shape.x, dy = y - shape.y, size = shape.type === 'circle' ? shape.size : shape.size * 1.2; return dx * dx + dy * dy < size * size; }
+            function selectShape(shapeToSelect) { selectedShape = shapeToSelect; updateControlsForSelectedShape(); updateLayersList(); redrawAllShapes(); }
+
+            const downEvent = (e) => {
+                e.preventDefault(); const pos = getMousePos(e);
+                if (isPatternMode) { isSelectingPattern = true; patternRect = { x: pos.x, y: pos.y, w: 0, h: 0 }; return; }
+                for (let i = shapes.length - 1; i >= 0; i--) { if (isPointInShape(pos.x, pos.y, shapes[i])) { selectShape(shapes[i]); isDragging = true; startX = pos.x - selectedShape.x; startY = pos.y - selectedShape.y; return; }}
+                selectedShape = null; updateLayersList();
+                const newShape = { type: currentShapeType, x: pos.x, y: pos.y, size: +elements.sizeSlider.value, rotation: 0, strokeColor: elements.strokePicker.value, fillColor: elements.fillPicker.value, lineWidth: +elements.lineWidthSlider.value, opacity: +elements.opacitySlider.value };
+                shapes.push(newShape); saveState(); selectShape(newShape);
+            };
+
+            const moveEvent = (e) => {
+                if(e.cancelable) e.preventDefault(); const pos = getMousePos(e);
+                if (isSelectingPattern) { patternRect.w = pos.x - patternRect.x; patternRect.h = pos.y - patternRect.y; redrawAllShapes(); return; }
+                if (isDragging && selectedShape) { selectedShape.x = pos.x - startX; selectedShape.y = pos.y - startY; redrawAllShapes(); }
+            };
+
+            const upEvent = () => {
+                if (isDragging) saveState(); isDragging = false;
+                if (isSelectingPattern) {
+                    isSelectingPattern = false; if (patternRect.w < 0) { patternRect.x += patternRect.w; patternRect.w *= -1; } if (patternRect.h < 0) { patternRect.y += patternRect.h; patternRect.h *= -1; }
+                    const tileTemplate = shapes.filter(s => s.x >= patternRect.x && s.x <= patternRect.x + patternRect.w && s.y >= patternRect.y && s.y <= patternRect.y + patternRect.h).map(s => ({ ...s, relativeX: s.x - patternRect.x, relativeY: s.y - patternRect.y }));
+                    if (tileTemplate.length > 0 && patternRect.w > 10 && patternRect.h > 10) {
+                        shapes = []; let tileW = Math.max(10, patternRect.w), tileH = Math.max(10, patternRect.h);
+                        for(let y = 0; y < canvas.height; y += tileH) { for(let x = 0; x < canvas.width; x += tileW) { tileTemplate.forEach(ts => { const newShape = { ...ts, x: x + ts.relativeX, y: y + ts.relativeY }; shapes.push(newShape); }); } }
+                        saveState();
+                    }
+                    togglePatternMode();
+                }
+            };
+            canvas.addEventListener('mousedown', downEvent); canvas.addEventListener('mousemove', moveEvent); window.addEventListener('mouseup', upEvent);
+            canvas.addEventListener('touchstart', downEvent, { passive: false }); canvas.addEventListener('touchmove', moveEvent, { passive: false }); window.addEventListener('touchend', upEvent, { passive: false });
+
+            function togglePatternMode() { 
+                isPatternMode = !isPatternMode; 
+                [elements.patternBtn, elements.mobilePatternBtn].forEach(btn => btn.classList.toggle('active', isPatternMode)); 
+                elements.patternBtn.textContent = isPatternMode ? "Desen Modunu İptal Et" : "Desen Modu"; 
+                elements.mobilePatternBtn.textContent = isPatternMode ? "İptal" : "Desenle"; 
+                canvas.style.cursor = isPatternMode ? 'copy' : 'crosshair'; 
+                if (!isPatternMode) redrawAllShapes(); 
+            }
+            const resetAll = () => { 
+                if (confirm("Tüm çalışmayı sıfırlamak istediğinize emin misiniz?")) { 
+                    shapes = []; selectedShape = null; 
+                    if (isPatternMode) togglePatternMode(); 
+                    saveState(); redrawAllShapes(); updateLayersList(); 
+                }
+            };
+            const saveImage = () => { 
+                const link = document.createElement('a'); 
+                link.download = 'desenim.png'; 
+                link.href = canvas.toDataURL(); 
+                link.click(); 
+            };
+            
+            elements.patternBtn.addEventListener('click', togglePatternMode); 
+            elements.mobilePatternBtn.addEventListener('click', togglePatternMode);
+            elements.resetBtn.addEventListener('click', resetAll); 
+            elements.mobileResetBtn.addEventListener('click', resetAll);
+            elements.saveBtn.addEventListener('click', saveImage);
+
+            function saveState() { 
+                history = history.slice(0, historyIndex + 1); 
+                history.push(JSON.parse(JSON.stringify(shapes))); 
+                historyIndex = history.length - 1; 
+            }
+            function undo() { 
+                if(historyIndex > 0) { 
+                    historyIndex--; 
+                    shapes = JSON.parse(JSON.stringify(history[historyIndex])); 
+                    redrawAllShapes(); 
+                    updateLayersList(); 
+                }
+            }
+            function redo() { 
+                if(historyIndex < history.length - 1) { 
+                    historyIndex++; 
+                    shapes = JSON.parse(JSON.stringify(history[historyIndex])); 
+                    redrawAllShapes(); 
+                    updateLayersList(); 
+                }
+            }
+
+            elements.undoBtn.addEventListener('click', undo); 
+            elements.redoBtn.addEventListener('click', redo);
+            elements.mobileControlsBtn.addEventListener('click', () => elements.panel.classList.toggle('show'));
+
+            startButton.addEventListener('click', () => {
+                welcomeOverlay.classList.remove('visible');
+            });
+            saveState(); updateLayersList();
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Doğru-Yanlış Etkinliği (Mobil Uyumlu)</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #4f46e5; /* Modern indigo */
+            --success-color: #10b981; /* Emerald green */
+            --error-color: #ef4444; /* Vibrant red */
+            --bg-color-start: #f0f9ff; /* Light sky blue */
+            --bg-color-end: #e0f2fe; /* Soft blue */
+            --container-bg: #ffffff; /* White */
+            --text-color: #1e293b; /* Dark slate */
+            --star-filled-color: #f59e0b; /* Amber */
+            --star-empty-color: #e2e8f0; /* Light gray */
+            --shadow-color: rgba(0, 0, 0, 0.1);
+            --transition: all 0.3s ease;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, var(--bg-color-start) 0%, var(--bg-color-end) 100%);
+            color: var(--text-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 16px;
+        }
+
+        .container {
+            background-color: var(--container-bg);
+            padding: 40px;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px var(--shadow-color);
+            text-align: center;
+            width: 100%;
+            max-width: 700px;
+            min-height: 500px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            position: relative;
+            transition: var(--transition);
+        }
+
+        h1 {
+            font-size: 2.2em;
+            font-weight: 700;
+            margin-bottom: 12px;
+            color: var(--text-color);
+        }
+
+        p {
+            font-size: 1.2em;
+            line-height: 1.5;
+            margin-bottom: 20px;
+            color: #475569;
+        }
+
+        .btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 14px 32px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 1.1em;
+            font-weight: 600;
+            transition: var(--transition);
+            margin: 8px;
+            min-width: 160px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(79, 70, 229, 0.3);
+        }
+
+        .btn.correct {
+            background-color: var(--success-color);
+            box-shadow: 0 6px 20px rgba(16, 185, 129, 0.3);
+        }
+
+        .btn.incorrect {
+            background-color: var(--error-color);
+            animation: shake 0.4s;
+            box-shadow: 0 6px 20px rgba(239, 68, 68, 0.3);
+        }
+
+        .btn:disabled {
+            cursor: not-allowed;
+            opacity: 0.6;
+            transform: none;
+        }
+
+        #quiz-screen, #end-screen {
+            display: none;
+        }
+
+        #progress-text {
+            font-size: 1em;
+            color: #64748b;
+            margin-bottom: 16px;
+            font-weight: 600;
+        }
+
+        #question-text {
+            font-size: 1.4em;
+            min-height: 100px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+            background: #f8fafc;
+            border-radius: 12px;
+            margin-bottom: 24px;
+        }
+
+        .answer-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+            margin-top: 24px;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-8px); }
+            75% { transform: translateX(8px); }
+        }
+
+        #detailed-results {
+            margin: 24px 0;
+            padding: 0 16px;
+        }
+
+        .result-category {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            font-size: 1.1em;
+            padding: 12px;
+            background: #f8fafc;
+            border-radius: 8px;
+        }
+
+        .category-name {
+            font-weight: 600;
+            text-align: left;
+        }
+
+        .stars {
+            font-size: 1.4em;
+            letter-spacing: 3px;
+        }
+
+        .filled-star {
+            color: var(--star-filled-color);
+        }
+
+        .empty-star {
+            color: var(--star-empty-color);
+        }
+
+        #total-result-text {
+            font-size: 1.1em;
+            font-weight: 600;
+            margin-top: 24px;
+            color: var(--text-color);
+        }
+
+        .creator {
+            position: absolute;
+            bottom: 16px;
+            right: 16px;
+            font-size: 0.9em;
+            color: #64748b;
+            font-weight: 500;
+        }
+
+        .icon {
+            width: 24px;
+            height: 24px;
+            fill: currentColor;
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 24px;
+            }
+            h1 {
+                font-size: 1.8em;
+            }
+            .btn {
+                padding: 12px 24px;
+                font-size: 1em;
+                min-width: 120px;
+            }
+            #question-text {
+                font-size: 1.2em;
+            }
+        }
+    </style>
+    <script src="scorm_api.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div id="start-screen">
+            <h1>Doğru mu, Yanlış mı?</h1>
+            <p>Verilen ifadeleri oku ve doğru mu, yanlış mı olduklarına karar ver.</p>
+            <button id="start-btn" class="btn">
+                <svg class="icon" viewBox="0 0 24 24">
+                    <path d="M5 3l14 9-14 9V3z"/>
+                </svg>
+                Başla
+            </button>
+            <div class="creator">Hazırlayan: Osman AYDOĞDU</div>
+        </div>
+        <div id="quiz-screen">
+            <p id="progress-text"></p>
+            <p id="question-text"></p>
+            <div class="answer-buttons">
+                <button id="true-btn" class="btn">
+                    <svg class="icon" viewBox="0 0 24 24">
+                        <path d="M20 6L9 17l-5-5"/>
+                    </svg>
+                    Doğru
+                </button>
+                <button id="false-btn" class="btn">
+                    <svg class="icon" viewBox="0 0 24 24">
+                        <path d="M18 6L6 18M6 6l12 12"/>
+                    </svg>
+                    Yanlış
+                </button>
+            </div>
+        </div>
+        <div id="end-screen">
+            <h1 id="result-title"></h1>
+            <div id="detailed-results"></div>
+            <p id="total-result-text"></p>
+            <button id="restart-btn" class="btn">
+                <svg class="icon" viewBox="0 0 24 24">
+                    <path d="M17 1l4 4-4 4M3 11V9a4 4 0 014-4h14M7 23l-4-4 4-4M21 13v2a4 4 0 01-4 4H3"/>
+                </svg>
+                Tekrar Başla
+            </button>
+        </div>
+    </div>
+    <script>
+        let isAudioInitialized = false;
+        const synth = new Tone.Synth().toDestination();
+        function playSuccessSound() { if (isAudioInitialized) synth.triggerAttackRelease("C5", "8n"); }
+        function playErrorSound() { if (isAudioInitialized) synth.triggerAttackRelease("A3", "8n"); }
+        function playClickSound() { if (!isAudioInitialized) return; const cS = new Tone.MembraneSynth().toDestination(); cS.triggerAttackRelease("C2", "8n"); }
+        function playEndSound() { if (!isAudioInitialized) return; const eS = new Tone.PolySynth(Tone.Synth).toDestination(); const n = Tone.now(); eS.triggerAttackRelease(["C4", "E4", "G4"], "8n", n); eS.triggerAttackRelease(["G4", "B4", "D5"], "8n", n + 0.2); eS.triggerAttackRelease(["C5", "E5", "G5"], "4n", n + 0.4); }
+
+        const sorular = {
+            bilgi: [
+                { text: "En az üç doğru parçasının birleşmesiyle oluşan kapalı şekillere çokgen denir.", answer: true },
+                { text: "Bir üçgenin köşegeni vardır.", answer: false },
+                { text: "Bütün kenar uzunlukları ve iç açılarının ölçüleri eşit olan çokgenlere düzgün çokgen denir.", answer: true },
+                { text: "Üçgenin iç açılarının ölçüleri toplamı 180°'dir.", answer: true },
+                { text: "Sadece iki kenar uzunluğu eşit olan üçgene eşkenar üçgen denir.", answer: false }
+            ],
+            kavrama: [
+                { text: "Bir karenin bütün iç açıları eşit olduğu için kare bir düzgün çokgendir.", answer: true },
+                { text: "Bir üçgenin iki tane geniş açısı olabilir.", answer: false },
+                { text: "Bir çokgenin kenar sayısı ile köşe sayısı birbirine eşittir.", answer: true },
+                { text: "Bütün dörtgenler düzgün çokgendir.", answer: false },
+                { text: "İkizkenar bir dik üçgenin dar açılarından her birinin ölçüsü 45°'dir.", answer: true }
+            ],
+            uygulama: [
+                { text: "Yarıçapları eşit ve birbirlerinin merkezinden geçen iki çemberin, merkezleri ile kesişim noktalarından birini birleştirirsek bir eşkenar üçgen elde ederiz.", answer: true },
+                { text: "Bir üçgenin iki iç açısının ölçüsü 50° ve 60° ise üçüncü açısı geniş açıdır.", answer: false },
+                { text: "Yarıçapları eşit olan iki çemberi kesiştirdiğimizde, merkezlerini ve kesişim noktalarından birini birleştirerek ikizkenar bir üçgen oluşturabiliriz.", answer: true },
+                { text: "Çemberin içindeki herhangi bir noktadan çizilen doğru parçaları mutlaka çemberi iki eş parçaya böler.", answer: false },
+                { text: "Elimizdeki altı adet kibrit çöpünü uç uca ekleyerek bir altıgen oluşturabiliriz.", answer: true }
+            ]
+        };
+        const TOTAL_QUESTIONS = sorular.bilgi.length + sorular.kavrama.length + sorular.uygulama.length;
+
+        const startScreen = document.getElementById('start-screen'), quizScreen = document.getElementById('quiz-screen'), endScreen = document.getElementById('end-screen');
+        const startBtn = document.getElementById('start-btn'), restartBtn = document.getElementById('restart-btn');
+        const progressText = document.getElementById('progress-text'), questionText = document.getElementById('question-text');
+        const trueBtn = document.getElementById('true-btn'), falseBtn = document.getElementById('false-btn');
+        const resultTitle = document.getElementById('result-title'), detailedResults = document.getElementById('detailed-results'), totalResultText = document.getElementById('total-result-text');
+
+        let currentQuestionIndex = 0;
+        let scores = { bilgi: 0, kavrama: 0, uygulama: 0 };
+        let shuffledQuestions = [];
+
+        function shuffleArray(array) { for (let i = array.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [array[i], array[j]] = [array[j], array[i]]; } }
+
+        startBtn.addEventListener('click', async () => {
+            if (!isAudioInitialized) { await Tone.start(); isAudioInitialized = true; }
+            playClickSound();
+            startScreen.style.display = 'none'; quizScreen.style.display = 'flex'; quizScreen.style.flexDirection = 'column';
+            startGame();
+        });
+        restartBtn.addEventListener('click', () => { playClickSound(); endScreen.style.display = 'none'; startScreen.style.display = 'block'; });
+        trueBtn.addEventListener('click', () => selectAnswer(true)); falseBtn.addEventListener('click', () => selectAnswer(false));
+        
+        function startGame() {
+            currentQuestionIndex = 0;
+            scores = { bilgi: 0, kavrama: 0, uygulama: 0 };
+            shuffleArray(sorular.bilgi); shuffleArray(sorular.kavrama); shuffleArray(sorular.uygulama);
+            shuffledQuestions = [...sorular.bilgi, ...sorular.kavrama, ...sorular.uygulama];
+            showQuestion();
+        }
+
+        function showQuestion() {
+            resetButtonStyles();
+            if (currentQuestionIndex < TOTAL_QUESTIONS) {
+                const question = shuffledQuestions[currentQuestionIndex];
+                progressText.textContent = `Soru ${currentQuestionIndex + 1} / ${TOTAL_QUESTIONS}`;
+                questionText.textContent = question.text;
+            } else { showResults(); }
+        }
+
+        function selectAnswer(userAnswer) {
+            const isCorrect = userAnswer === shuffledQuestions[currentQuestionIndex].answer;
+            trueBtn.disabled = true; falseBtn.disabled = true;
+            if (isCorrect) {
+                playSuccessSound();
+                if (currentQuestionIndex < 5) scores.bilgi++;
+                else if (currentQuestionIndex < 10) scores.kavrama++;
+                else scores.uygulama++;
+                const selectedBtn = userAnswer ? trueBtn : falseBtn;
+                selectedBtn.classList.add('correct');
+            } else {
+                playErrorSound();
+                const selectedBtn = userAnswer ? trueBtn : falseBtn;
+                selectedBtn.classList.add('incorrect');
+                const correctBtn = !userAnswer ? trueBtn : falseBtn;
+                correctBtn.classList.add('correct');
+            }
+            setTimeout(() => { currentQuestionIndex++; showQuestion(); }, 1500);
+        }
+        
+        function resetButtonStyles() { trueBtn.disabled = false; falseBtn.disabled = false; trueBtn.classList.remove('correct', 'incorrect'); falseBtn.classList.remove('correct', 'incorrect'); }
+
+        function generateStars(score, total = 5) {
+            const filled = '★'.repeat(score);
+            const empty = '★'.repeat(total - score);
+            return `<span class="filled-star">${filled}</span><span class="empty-star">${empty}</span>`;
+        }
+
+        function showResults() {
+            playEndSound();
+            quizScreen.style.display = 'none'; endScreen.style.display = 'block';
+            const totalScore = scores.bilgi + scores.kavrama + scores.uygulama;
+            const percentage = (totalScore / TOTAL_QUESTIONS) * 100;
+            
+            if (percentage >= 80) { resultTitle.textContent = "Harika İş Çıkardın!"; } 
+            else if (percentage >= 50) { resultTitle.textContent = "Güzel Çaba!"; } 
+            else { resultTitle.textContent = "Biraz Daha Çalışalım!"; }
+
+            detailedResults.innerHTML = `
+                <div class="result-category"><span class="category-name">Temel Bilgiler:</span><span class="stars">${generateStars(scores.bilgi)}</span></div>
+                <div class="result-category"><span class="category-name">Konuyu Anlama:</span><span class="stars">${generateStars(scores.kavrama)}</span></div>
+                <div class="result-category"><span class="category-name">Bilgini Kullanma:</span><span class="stars">${generateStars(scores.uygulama)}</span></div>
+            `;
+            totalResultText.textContent = `Toplam Başarın: ${TOTAL_QUESTIONS} soruda ${totalScore} doğru`;
+        }
+    </script>
+</body>
+</html>

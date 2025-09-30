@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Çokgen Köşegenleri Çizme Etkinliği</title>
+    <style>
+        /* Genel Sayfa Stilleri */
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            background: linear-gradient(135deg, #e0eafc, #cfdef3);
+            color: #1a202c;
+            text-align: center;
+            padding: 20px;
+        }
+
+        h1 {
+            color: #2d3748;
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .author {
+            font-size: 1.1rem;
+            color: #4a5568;
+            margin-bottom: 1.5rem;
+        }
+
+        /* Canvas ve Kareli Zemin Stili */
+        #canvas-container {
+            margin: 1.5rem 0;
+            border: 3px solid #4c51bf;
+            background-color: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            --grid-size: 25px;
+            background-image:
+                linear-gradient(to right, #edf2f7 1px, transparent 1px),
+                linear-gradient(to bottom, #edf2f7 1px, transparent 1px);
+            background-size: var(--grid-size) var(--grid-size);
+            overflow: hidden;
+        }
+
+        canvas {
+            display: block;
+        }
+
+        /* Kontrol Paneli ve Buton Stilleri */
+        #controls {
+            display: flex;
+            gap: 10px;
+            margin-top: 1rem;
+        }
+
+        button {
+            background-color: #4c51bf;
+            color: #ffffff;
+            border: none;
+            padding: 12px 24px;
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.2s, box-shadow 0.2s;
+        }
+
+        button:hover {
+            background-color: #434190;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        button:disabled {
+            background-color: #e2e8f0;
+            color: #a0aec0;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Geri Bildirim ve Talimat Stilleri */
+        #instruction-text {
+            font-size: 1.25rem;
+            color: #2d3748;
+            margin-bottom: 1rem;
+        }
+
+        #feedback-text {
+            margin-top: 1rem;
+            font-size: 1.125rem;
+            font-weight: 600;
+            min-height: 30px;
+        }
+
+        .correct { color: #38a169; }
+        .incorrect { color: #e53e3e; }
+        .finished { color: #805ad5; }
+
+        /* Mobil Uyumluluk */
+        @media (max-width: 600px) {
+            h1 {
+                font-size: 1.75rem;
+            }
+            #canvas-container {
+                --grid-size: 20px;
+            }
+            button {
+                padding: 10px 18px;
+                font-size: 0.9rem;
+            }
+            #instruction-text {
+                font-size: 1rem;
+            }
+        }
+    </style>
+    <script src="scorm_api.js"></script>
+</head>
+<body>
+    <h1>Çokgen Köşegenleri Çizme Etkinliği</h1>
+    <p class="author">Hazırlayan: Osman AYDOĞDU</p>
+    <p id="instruction-text">Lütfen beşgenin tüm köşegenlerini çizin.</p>
+
+    <div id="canvas-container">
+        <canvas id="geometry-canvas" width="500" height="500"></canvas>
+    </div>
+
+    <div id="controls">
+        <button id="check-button">Kontrol Et</button>
+        <button id="next-button" style="display: none;">Sonraki Soru</button>
+        <button id="finish-button" style="display: none;">Etkinliği Bitir</button>
+    </div>
+
+    <p id="feedback-text"></p>
+
+    <script>
+        const canvas = document.getElementById('geometry-canvas');
+        const ctx = canvas.getContext('2d');
+        const container = document.getElementById('canvas-container');
+
+        const checkButton = document.getElementById('check-button');
+        const nextButton = document.getElementById('next-button');
+        const finishButton = document.getElementById('finish-button');
+        const feedbackText = document.getElementById('feedback-text');
+        const instructionText = document.getElementById('instruction-text');
+
+        let isDrawing = false;
+        let startPoint = null;
+        let userLines = [];
+        let currentPolygonIndex = 0;
+
+        const polygons = [
+            {
+                name: "Beşgen",
+                vertices: [],
+                correctDiagonals: [
+                    [0, 2], [0, 3],
+                    [1, 3], [1, 4],
+                    [2, 4]
+                ]
+            },
+            {
+                name: "Dörtgen",
+                vertices: [],
+                correctDiagonals: [
+                    [0, 2], [1, 3]
+                ]
+            },
+            {
+                name: "Altıgen",
+                vertices: [],
+                correctDiagonals: [
+                    [0, 2], [0, 3], [0, 4],
+                    [1, 3], [1, 4], [1, 5],
+                    [2, 4], [2, 5],
+                    [3, 5]
+                ]
+            },
+            {
+                name: "Yedigen",
+                vertices: [],
+                correctDiagonals: [
+                    [0, 2], [0, 3], [0, 4], [0, 5],
+                    [1, 3], [1, 4], [1, 5], [1, 6],
+                    [2, 4], [2, 5], [2, 6],
+                    [3, 5], [3, 6],
+                    [4, 6]
+                ]
+            },
+            {
+                name: "Sekizgen",
+                vertices: [],
+                correctDiagonals: [
+                    [0, 2], [0, 3], [0, 4], [0, 5], [0, 6],
+                    [1, 3], [1, 4], [1, 5], [1, 6], [1, 7],
+                    [2, 4], [2, 5], [2, 6], [2, 7],
+                    [3, 5], [3, 6], [3, 7],
+                    [4, 6], [4, 7],
+                    [5, 7]
+                ]
+            },
+            {
+                name: "Dokuzgen",
+                vertices: [],
+                correctDiagonals: [
+                    [0, 2], [0, 3], [0, 4], [0, 5], [0, 6], [0, 7],
+                    [1, 3], [1, 4], [1, 5], [1, 6], [1, 7], [1, 8],
+                    [2, 4], [2, 5], [2, 6], [2, 7], [2, 8],
+                    [3, 5], [3, 6], [3, 7], [3, 8],
+                    [4, 6], [4, 7], [4, 8],
+                    [5, 7], [5, 8],
+                    [6, 8]
+                ]
+            }
+        ];
+
+        function setCanvasSize() {
+            const size = window.innerWidth < 600 ? 300 : 500;
+            canvas.width = size;
+            canvas.height = size;
+            calculatePolygonVertices(size);
+        }
+
+        function calculatePolygonVertices(size) {
+            const center = size / 2;
+            const radius = size * 0.4;
+
+            polygons[0].vertices = getRegularPolygonVertices(5, center, radius);
+            polygons[1].vertices = getRegularPolygonVertices(4, center, radius, Math.PI / 4);
+            polygons[2].vertices = getRegularPolygonVertices(6, center, radius);
+            polygons[3].vertices = getRegularPolygonVertices(7, center, radius);
+            polygons[4].vertices = getRegularPolygonVertices(8, center, radius);
+            polygons[5].vertices = getRegularPolygonVertices(9, center, radius);
+        }
+
+        function getRegularPolygonVertices(sides, center, radius, angleOffset = 0) {
+            const vertices = [];
+            for (let i = 0; i < sides; i++) {
+                const angle = (i / sides) * 2 * Math.PI - Math.PI / 2 + angleOffset;
+                vertices.push({
+                    x: center + radius * Math.cos(angle),
+                    y: center + radius * Math.sin(angle)
+                });
+            }
+            return vertices;
+        }
+
+        function drawPolygon() {
+            const polygon = polygons[currentPolygonIndex];
+            const vertices = polygon.vertices;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Kenarları çiz
+            ctx.beginPath();
+            ctx.moveTo(vertices[0].x, vertices[0].y);
+            for (let i = 1; i < vertices.length; i++) {
+                ctx.lineTo(vertices[i].x, vertices[i].y);
+            }
+            ctx.closePath();
+            ctx.strokeStyle = '#2d3748';
+            ctx.lineWidth = 3;
+            ctx.stroke();
+
+            // Köşeleri ve harfleri çiz
+            const labels = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I'];
+            const center = canvas.width / 2;
+            const isMobile = canvas.width < 400;
+            const labelOffset = isMobile ? 20 : 25;
+            const fontSize = isMobile ? 16 : 20;
+
+            vertices.forEach((vertex, i) => {
+                ctx.beginPath();
+                ctx.arc(vertex.x, vertex.y, 8, 0, 2 * Math.PI);
+                ctx.fillStyle = '#e53e3e';
+                ctx.fill();
+
+                const vectorX = vertex.x - center;
+                const vectorY = vertex.y - center;
+                const magnitude = Math.sqrt(vectorX * vectorX + vectorY * vectorY);
+                const labelX = vertex.x + (vectorX / magnitude) * labelOffset;
+                const labelY = vertex.y + (vectorY / magnitude) * labelOffset;
+
+                ctx.font = `bold ${fontSize}px Inter, Arial`;
+                ctx.fillStyle = '#2d3748';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(labels[i], labelX, labelY);
+            });
+        }
+
+        function drawUserLines() {
+            ctx.strokeStyle = '#4c51bf';
+            ctx.lineWidth = 2;
+            userLines.forEach(line => {
+                const startVertex = polygons[currentPolygonIndex].vertices[line[0]];
+                const endVertex = polygons[currentPolygonIndex].vertices[line[1]];
+                ctx.beginPath();
+                ctx.moveTo(startVertex.x, startVertex.y);
+                ctx.lineTo(endVertex.x, endVertex.y);
+                ctx.stroke();
+            });
+        }
+
+        function redrawCanvas() {
+            drawPolygon();
+            drawUserLines();
+        }
+
+        function getVertexAt(pos) {
+            const vertices = polygons[currentPolygonIndex].vertices;
+            for (let i = 0; i < vertices.length; i++) {
+                const dist = Math.sqrt(Math.pow(pos.x - vertices[i].x, 2) + Math.pow(pos.y - vertices[i].y, 2));
+                if (dist < 15) {
+                    return i;
+                }
+            }
+            return null;
+        }
+
+        function getCanvasPos(event) {
+            const rect = canvas.getBoundingClientRect();
+            const clientX = event.touches ? event.touches[0].clientX : event.clientX;
+            const clientY = event.touches ? event.touches[0].clientY : event.clientY;
+            return { x: clientX - rect.left, y: clientY - rect.top };
+        }
+
+        function handleStart(e) {
+            e.preventDefault();
+            const vertexIndex = getVertexAt(getCanvasPos(e));
+            if (vertexIndex !== null) {
+                isDrawing = true;
+                startPoint = vertexIndex;
+            }
+        }
+
+        function handleMove(e) {
+            if (!isDrawing) return;
+            e.preventDefault();
+            const pos = getCanvasPos(e);
+            redrawCanvas();
+            const startVertex = polygons[currentPolygonIndex].vertices[startPoint];
+            ctx.beginPath();
+            ctx.moveTo(startVertex.x, startVertex.y);
+            ctx.lineTo(pos.x, pos.y);
+            ctx.strokeStyle = 'rgba(76, 81, 191, 0.5)';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+        }
+
+        function handleEnd(e) {
+            if (!isDrawing) return;
+            isDrawing = false;
+            const endPoint = getVertexAt(getCanvasPos(e.changedTouches ? e.changedTouches[0] : e));
+
+            if (endPoint !== null && startPoint !== null && endPoint !== startPoint) {
+                const verticesCount = polygons[currentPolygonIndex].vertices.length;
+                const isAdjacent = Math.abs(startPoint - endPoint) === 1 || Math.abs(startPoint - endPoint) === verticesCount - 1;
+
+                if (!isAdjacent) {
+                    const line = [Math.min(startPoint, endPoint), Math.max(startPoint, endPoint)];
+                    const lineExists = userLines.some(l => l[0] === line[0] && l[1] === line[1]);
+                    if (!lineExists) {
+                        userLines.push(line);
+                    }
+                }
+            }
+            redrawCanvas();
+        }
+
+        function checkAnswer() {
+            const correct = polygons[currentPolygonIndex].correctDiagonals;
+            const userLineCount = userLines.length;
+            const correctLineCount = correct.length;
+
+            if (userLineCount < correctLineCount) {
+                feedbackText.textContent = 'Eksik çizim yaptın. Tekrar kontrol et.';
+                feedbackText.className = 'incorrect';
+                return;
+            }
+
+            if (userLineCount > correctLineCount) {
+                feedbackText.textContent = 'Fazla çizim yaptın. Tekrar kontrol et.';
+                feedbackText.className = 'incorrect';
+                return;
+            }
+
+            const sortedUserLines = userLines.map(l => l.join('-')).sort();
+            const sortedCorrectLines = correct.map(l => l.join('-')).sort();
+            const isCorrect = JSON.stringify(sortedUserLines) === JSON.stringify(sortedCorrectLines);
+
+            if (isCorrect) {
+                feedbackText.textContent = 'Harika! Tüm köşegenler doğru.';
+                feedbackText.className = 'correct';
+                checkButton.disabled = true;
+                if (currentPolygonIndex < polygons.length - 1) {
+                    nextButton.style.display = 'inline-block';
+                } else {
+                    finishButton.style.display = 'inline-block';
+                }
+            } else {
+                feedbackText.textContent = 'Doğru sayıda köşegen çizdin ama bazıları yanlış. Lütfen kontrol et.';
+                feedbackText.className = 'incorrect';
+            }
+        }
+
+        function loadNextPolygon() {
+            currentPolygonIndex++;
+            userLines = [];
+            feedbackText.textContent = '';
+            checkButton.disabled = false;
+            nextButton.style.display = 'none';
+            instructionText.textContent = `Lütfen ${polygons[currentPolygonIndex].name.toLowerCase()}in tüm köşegenlerini çizin.`;
+            redrawCanvas();
+        }
+
+        function finishActivity() {
+            instructionText.textContent = "Etkinlik Tamamlandı!";
+            feedbackText.textContent = 'Tebrikler! Başarıyla bitirdin.';
+            feedbackText.className = 'finished';
+            checkButton.style.display = 'none';
+            nextButton.style.display = 'none';
+            finishButton.style.display = 'none';
+            canvas.style.pointerEvents = 'none';
+        }
+
+        // Olay dinleyicileri
+        canvas.addEventListener('mousedown', handleStart);
+        canvas.addEventListener('mousemove', handleMove);
+        canvas.addEventListener('mouseup', handleEnd);
+        canvas.addEventListener('mouseleave', () => { if (isDrawing) { isDrawing = false; redrawCanvas(); } });
+
+        canvas.addEventListener('touchstart', handleStart);
+        canvas.addEventListener('touchmove', handleMove);
+        canvas.addEventListener('touchend', handleEnd);
+
+        checkButton.addEventListener('click', checkAnswer);
+        nextButton.addEventListener('click', loadNextPolygon);
+        finishButton.addEventListener('click', finishActivity);
+
+        window.addEventListener('resize', () => {
+            setCanvasSize();
+            redrawCanvas();
+        });
+
+        // Başlangıç
+        setCanvasSize();
+        instructionText.textContent = `Lütfen ${polygons[currentPolygonIndex].name.toLowerCase()}in tüm köşegenlerini çizin.`;
+        redrawCanvas();
+    </script>
+</body>
+</html>

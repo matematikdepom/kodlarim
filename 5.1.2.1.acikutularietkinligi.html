@@ -1,0 +1,566 @@
+<html lang="tr"><head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
+    <title>Açı Kutuları Etkinliği</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        #game-container.angle-game {
+            --angle-primary-bg: #f4f7fc;
+            --angle-container-bg: #ffffff;
+            --angle-box-bg: #e2e8f0;
+            --angle-box-main-color: #ff6b6b;
+            --angle-box-border-color: #2d3748;
+            --angle-initial-card-bg: #ffd166;
+            --angle-clickable-card-bg: #bee3f8;
+            --angle-clickable-card-border: #2b6cb0;
+            --angle-selected-color: #3182ce;
+            --angle-success-color: #38a169;
+            --angle-error-color: #e53e3e;
+            --angle-text-color: #2d3748;
+            --angle-button-color: #3182ce;
+            --angle-font-main: 'Inter', sans-serif;
+            font-family: var(--angle-font-main);
+            background-color: var(--angle-primary-bg);
+            width: 90%;
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+            text-align: center;
+            font-size: 16px;
+        }
+
+        #game-container.angle-game body {
+            margin: 0;
+            padding: 1.5rem 0;
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: manipulation;
+            overflow-x: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        #game-container.angle-game #game-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem 1.25rem;
+            background-color: #edf2f7;
+            border-radius: 10px;
+            margin-bottom: 1.25rem;
+        }
+
+        #game-container.angle-game .info-item { 
+            font-size: 1.1rem; 
+            font-weight: 600; 
+            color: var(--angle-text-color); 
+        }
+
+        #game-container.angle-game #timer-display { 
+            color: var(--angle-error-color); 
+            display: none; 
+        }
+
+        #game-container.angle-game .title-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        #game-container.angle-game #main-title { 
+            font-size: 2rem; 
+            font-weight: 700; 
+            margin: 0; 
+            color: var(--angle-text-color); 
+        }
+
+        #game-container.angle-game #instruction-icon {
+            font-size: 1.4rem;
+            font-weight: 600;
+            cursor: pointer;
+            background-color: #e2e8f0;
+            color: var(--angle-text-color);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+        }
+
+        #game-container.angle-game #instruction-icon:hover { 
+            background-color: #cbd5e0; 
+            transform: scale(1.1); 
+        }
+
+        #game-container.angle-game .story { 
+            font-size: 1rem; 
+            color: var(--angle-text-color); 
+            line-height: 1.5; 
+            margin-bottom: 1.5rem; 
+            text-align: left; 
+        }
+
+        #game-container.angle-game .stage { 
+            display: none; 
+        }
+
+        #game-container.angle-game .stage.active { 
+            display: block; 
+        }
+
+        #game-container.angle-game .boxes-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.25rem;
+            margin: 2rem 0;
+            padding: 1.25rem;
+            background-color: var(--angle-box-bg);
+            border-radius: 12px;
+        }
+
+        #game-container.angle-game .box-wrapper { 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            gap: 0.75rem; 
+            width: 100%; 
+        }
+
+        #game-container.angle-game .box { 
+            width: 100%; 
+            height: 0; 
+            padding-bottom: 100%; 
+            position: relative; 
+            background-color: var(--angle-box-main-color); 
+            border: 2px solid var(--angle-box-border-color); 
+            border-radius: 10px; 
+            cursor: pointer; 
+            transition: transform 0.3s ease, box-shadow 0.3s ease; 
+        }
+
+        #game-container.angle-game .box:hover { 
+            transform: translateY(-4px); 
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1); 
+        }
+
+        #game-container.angle-game .box.selected { 
+            box-shadow: 0 0 0 4px var(--angle-selected-color); 
+            transform: scale(1.03); 
+        }
+
+        #game-container.angle-game .box.completed { 
+            cursor: default; 
+            opacity: 0.9; 
+        }
+
+        #game-container.angle-game .box-label { 
+            font-weight: 600; 
+            font-size: 1rem; 
+            color: var(--angle-text-color); 
+        }
+
+        #game-container.angle-game .card-display { 
+            position: absolute; 
+            inset: 0; 
+            display: flex; 
+            flex-direction: column; 
+            justify-content: center; 
+            align-items: center; 
+            gap: 6%; 
+        }
+
+        #game-container.angle-game .angle-card { 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            font-weight: 600; 
+            color: var(--angle-box-border-color); 
+            border-radius: 6px; 
+        }
+
+        #game-container.angle-game .initial-card { 
+            width: 65%; 
+            height: 40%; 
+            background-color: var(--angle-initial-card-bg); 
+            border: 2px solid var(--angle-box-border-color); 
+            font-size: 1.4rem; 
+            transition: all 0.3s ease; 
+        }
+
+        #game-container.angle-game .clickable-card { 
+            width: 90px; 
+            height: 50px; 
+            background-color: var(--angle-clickable-card-bg); 
+            border: 2px solid var(--angle-clickable-card-border); 
+            font-size: 1.3rem; 
+            cursor: pointer; 
+            transition: transform 0.3s ease, box-shadow 0.3s ease; 
+            color: var(--angle-clickable-card-border); 
+        }
+
+        #game-container.angle-game .clickable-card:hover { 
+            transform: translateY(-3px); 
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); 
+        }
+
+        #game-container.angle-game .dropped { 
+            width: 60%; 
+            height: 35%; 
+            font-size: 1.1rem; 
+            background-color: #9ae6b4; 
+            border: 2px solid #276749; 
+        }
+
+        #game-container.angle-game .box.completed .initial-card { 
+            height: 35%; 
+            font-size: 1.1rem; 
+        }
+
+        #game-container.angle-game .cards-container { 
+            margin-top: 1.5rem; 
+            padding: 1rem 0.75rem; 
+            display: flex; 
+            flex-wrap: wrap; 
+            justify-content: center; 
+            gap: 0.75rem; 
+            border-top: 1px solid #e2e8f0; 
+            min-height: 130px; 
+        }
+
+        #game-container.angle-game #restart-button { 
+            margin-top: 2rem; 
+            padding: 0.9rem 2rem; 
+            font-size: 1.1rem; 
+            font-weight: 600; 
+            font-family: var(--angle-font-main); 
+            color: white; 
+            background-color: var(--angle-button-color); 
+            border: none; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            transition: background-color 0.3s ease, transform 0.2s ease; 
+        }
+
+        #game-container.angle-game #restart-button:hover { 
+            background-color: #2b6cb0; 
+            transform: translateY(-2px); 
+        }
+
+        #game-container.angle-game #message-overlay { 
+            position: fixed; 
+            inset: 0; 
+            background-color: rgba(0, 0, 0, 0.7); 
+            display: none; 
+            justify-content: center; 
+            align-items: center; 
+            z-index: 1000; 
+            padding: 1rem; 
+        }
+
+        #game-container.angle-game #message-box { 
+            background: white; 
+            padding: 2rem; 
+            border-radius: 12px; 
+            text-align: center; 
+            box-shadow: 0 8px 28px rgba(0, 0, 0, 0.15); 
+            width: 90%; 
+            max-width: 500px; 
+        }
+
+        #game-container.angle-game #message-box ul { 
+            text-align: left; 
+            margin: 1.5rem 0; 
+            padding-left: 20px; 
+            list-style-position: inside; 
+        }
+
+        #game-container.angle-game #message-box li { 
+            margin-bottom: 0.8rem; 
+            font-size: 1.1rem; 
+            color: var(--angle-text-color); 
+        }
+
+        #game-container.angle-game #message-text { 
+            font-size: 1.3rem; 
+            margin-bottom: 1.5rem; 
+            line-height: 1.5; 
+            color: var(--angle-text-color); 
+        }
+
+        #game-container.angle-game #message-box button { 
+            padding: 0.8rem 2rem; 
+            font-size: 1.1rem; 
+            border: none; 
+            font-family: var(--angle-font-main); 
+            border-radius: 8px; 
+            cursor: pointer; 
+            color: white; 
+            transition: background-color 0.3s ease, transform 0.2s ease; 
+        }
+
+        #game-container.angle-game #message-box button:hover { 
+            transform: translateY(-2px); 
+        }
+
+        @media (min-width: 768px) {
+            #game-container.angle-game .boxes-container { 
+                grid-template-columns: 1fr 1fr 1fr 1fr; 
+            }
+            #game-container.angle-game .story { 
+                font-size: 1.1rem; 
+            }
+            #game-container.angle-game #main-title { 
+                font-size: 2.2rem; 
+            }
+        }
+    </style>
+    <script src="scorm_api.js"></script>
+</head>
+<body>
+
+    <div id="game-container" class="angle-game">
+        <div class="title-container">
+            <h1 id="main-title">AÇI KUTULARI ETKİNLİĞİ<br> <font size="5" color="red"> Hazırlayan: Osman AYDOĞDU </font> </h1>
+            <div id="instruction-icon">?</div>
+        </div>
+        <div id="game-info">
+            <div id="score-display" class="info-item">Puan: 30</div>
+            <div id="timer-display" class="info-item" style="display: none;">Süre: 00</div>
+        </div>
+
+        <div id="stage1" class="stage">
+            <p class="story"><b>Seviye 1 - Tümler Açıyı Öğreniyoruz </b> <br> Önce bir turuncu kutuyu, sonra onun tümler açısını gösteren mavi kartı işaretleyelim.</p>
+            <div class="boxes-container"><div class="box-wrapper"><div class="box completed" data-correct="31"><div class="card-display"><div class="initial-card angle-card">59°</div><div class="dropped angle-card" data-angle="31">31°</div></div></div><div class="box-label">1. Kutu</div></div><div class="box-wrapper"><div class="box completed" data-correct="58"><div class="card-display"><div class="initial-card angle-card">32°</div><div class="dropped angle-card" data-angle="58">58°</div></div></div><div class="box-label">2. Kutu</div></div><div class="box-wrapper"><div class="box completed" data-correct="69"><div class="card-display"><div class="initial-card angle-card">21°</div><div class="dropped angle-card" data-angle="69">69°</div></div></div><div class="box-label">3. Kutu</div></div><div class="box-wrapper"><div class="box completed" data-correct="29"><div class="card-display"><div class="initial-card angle-card">61°</div><div class="dropped angle-card" data-angle="29">29°</div></div></div><div class="box-label">4. Kutu</div></div></div>
+            <div class="cards-container"><div class="clickable-card angle-card" data-angle="31" style="visibility: hidden;">31°</div><div class="clickable-card angle-card" data-angle="58" style="visibility: hidden;">58°</div><div class="clickable-card angle-card" data-angle="69" style="visibility: hidden;">69°</div><div class="clickable-card angle-card" data-angle="64">64°</div><div class="clickable-card angle-card" data-angle="29" style="visibility: hidden;">29°</div><div class="clickable-card angle-card" data-angle="13">13°</div><div class="clickable-card angle-card" data-angle="75">75°</div><div class="clickable-card angle-card" data-angle="17">17°</div><div class="clickable-card angle-card" data-angle="25">25°</div></div>
+        </div>
+        <div id="stage2" class="stage active">
+            <p class="story"><b>Seviye 2 - Bütünler Açıyı Öğreniyoruz</b> <br>Şimdi turuncu kutulardaki her bir açının bütünler açısını gösteren kartı bulalım.</p>
+            <div class="boxes-container"><div class="box-wrapper"><div class="box" data-correct="107"><div class="card-display"><div class="initial-card angle-card">73°</div></div></div><div class="box-label">1. Kutu</div></div><div class="box-wrapper"><div class="box" data-correct="48"><div class="card-display"><div class="initial-card angle-card">132°</div></div></div><div class="box-label">2. Kutu</div></div><div class="box-wrapper"><div class="box" data-correct="68"><div class="card-display"><div class="initial-card angle-card">112°</div></div></div><div class="box-label">3. Kutu</div></div><div class="box-wrapper"><div class="box" data-correct="115"><div class="card-display"><div class="initial-card angle-card">65°</div></div></div><div class="box-label">4. Kutu</div></div></div>
+            <div class="cards-container"><div class="clickable-card angle-card" data-angle="48">48°</div><div class="clickable-card angle-card" data-angle="38">38°</div><div class="clickable-card angle-card" data-angle="63">63°</div><div class="clickable-card angle-card" data-angle="115">115°</div><div class="clickable-card angle-card" data-angle="170">170°</div><div class="clickable-card angle-card" data-angle="81">81°</div><div class="clickable-card angle-card" data-angle="80">80°</div><div class="clickable-card angle-card" data-angle="107">107°</div><div class="clickable-card angle-card" data-angle="68">68°</div></div>
+        </div>
+        <div id="stage3" class="stage">
+            <p class="story"><b>Seviye 3 - Zamana Karşı Yarışıyoruz</b><br> <b>60 saniye</b> içinde tümler açıları bulalım!</p>
+            <div class="boxes-container"></div>
+            <div class="cards-container"></div>
+        </div>
+        <div id="stage4" class="stage">
+            <p class="story"><b>Seviye 4 - Zamana Karşı Yarışıyoruz</b> <br>Süpersin! Şimdi <b>40 saniye</b> içinde bütünler açıları bulalım!</p>
+            <div class="boxes-container"></div>
+            <div class="cards-container"></div>
+        </div>
+
+        <button id="restart-button">Etkinliği Yeniden Başlat</button>
+    </div>
+    <div id="message-overlay" class="angle-game" style="display: none;"><div id="message-box"><div id="message-text">Harika! Seviye 1 tamamlandı.</div><button id="message-button" style="background-color: var(--angle-success-color);">Kapat</button></div></div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const gameContainer = document.getElementById('game-container');
+            const restartButton = document.getElementById('restart-button');
+            const instructionIcon = document.getElementById('instruction-icon');
+            const messageOverlay = document.getElementById('message-overlay');
+            const messageText = document.getElementById('message-text');
+            const messageButton = document.getElementById('message-button');
+            const scoreDisplay = document.getElementById('score-display');
+            const timerDisplay = document.getElementById('timer-display');
+
+            let score = 0;
+            let currentStage = 1;
+            let completedBoxes = 0;
+            let timerInterval = null;
+            let selectedBox = null;
+
+            const stagesConfig = {
+                1: { totalAngle: 90,  range: { min: 10, max: 80 }, timeLimit: null, nextStage: 2 },
+                2: { totalAngle: 180, range: { min: 20, max: 160 }, timeLimit: null, nextStage: 3 },
+                3: { totalAngle: 90,  range: { min: 10, max: 80 }, timeLimit: 60, nextStage: 4 },
+                4: { totalAngle: 180, range: { min: 20, max: 160 }, timeLimit: 40, nextStage: null }
+            };
+
+            function updateScore(newScore) {
+                score = Math.max(0, newScore);
+                scoreDisplay.textContent = `Puan: ${score}`;
+            }
+
+            function startTimer(duration, onTimeUp) {
+                clearInterval(timerInterval);
+                let timer = duration;
+                timerDisplay.style.display = 'block';
+                const tick = () => {
+                    timerDisplay.textContent = `Süre: ${String(timer).padStart(2, '0')}`;
+                    if (timer-- <= 0) {
+                        clearInterval(timerInterval);
+                        onTimeUp();
+                    }
+                };
+                tick();
+                timerInterval = setInterval(tick, 1000);
+            }
+
+            function showMessage(htmlContent, type, onclose = null) {
+                messageText.innerHTML = htmlContent;
+                if (type === 'instruction') {
+                    messageButton.style.backgroundColor = 'var(--angle-button-color)';
+                } else {
+                    messageButton.style.backgroundColor = (type === 'success') ? 'var(--angle-success-color)' : 'var(--angle-error-color)';
+                }
+                
+                messageOverlay.style.display = 'flex';
+                const closeHandler = () => {
+                    messageOverlay.style.display = 'none';
+                    if (onclose) onclose();
+                };
+                messageButton.addEventListener('click', closeHandler, { once: true });
+            }
+
+            function setupStage(stageNumber) {
+                currentStage = stageNumber;
+                completedBoxes = 0;
+                selectedBox = null;
+                const config = stagesConfig[stageNumber];
+                if (!config) return;
+
+                document.querySelectorAll('.stage').forEach(s => s.classList.remove('active'));
+                const stageContainer = document.getElementById(`stage${stageNumber}`);
+                stageContainer.classList.add('active');
+
+                if (config.timeLimit) {
+                    startTimer(config.timeLimit, () => {
+                        showMessage(`Süre doldu!<br>Seviye ${stageNumber} yeniden başlıyor.`, 'error', () => setupStage(stageNumber));
+                    });
+                } else {
+                    clearInterval(timerInterval);
+                    timerDisplay.style.display = 'none';
+                }
+
+                const boxesContainer = stageContainer.querySelector('.boxes-container');
+                const cardsContainer = stageContainer.querySelector('.cards-container');
+                boxesContainer.innerHTML = '';
+                cardsContainer.innerHTML = '';
+
+                const boxAngles = new Set();
+                while (boxAngles.size < 4) boxAngles.add(Math.floor(Math.random() * (config.range.max - config.range.min + 1)) + config.range.min);
+                const boxAnglesArray = [...boxAngles];
+                const correctCards = boxAnglesArray.map(angle => config.totalAngle - angle);
+                const decoyCards = new Set();
+                const allAnswers = new Set([...boxAnglesArray, ...correctCards]);
+                
+                while (decoyCards.size < 5) {
+                    const randomAngle = Math.floor(Math.random() * (config.totalAngle - 10)) + 5;
+                    if (!allAnswers.has(randomAngle)) decoyCards.add(randomAngle);
+                }
+                const cardPool = [...correctCards, ...decoyCards].sort(() => Math.random() - 0.5);
+
+                boxAnglesArray.forEach((angle, index) => {
+                    const boxWrapper = document.createElement('div');
+                    boxWrapper.className = 'box-wrapper';
+                    const correctValue = config.totalAngle - angle;
+                    boxWrapper.innerHTML = `<div class="box" data-correct="${correctValue}"><div class="card-display"><div class="initial-card angle-card">${angle}°</div></div></div><div class="box-label">${index + 1}. Kutu</div>`;
+                    boxesContainer.appendChild(boxWrapper);
+                });
+
+                cardPool.forEach(angle => {
+                    const card = document.createElement('div');
+                    card.className = 'clickable-card angle-card';
+                    card.dataset.angle = angle;
+                    card.textContent = `${angle}°`;
+                    cardsContainer.appendChild(card);
+                });
+            }
+            
+            gameContainer.addEventListener('click', (e) => {
+                const target = e.target;
+                
+                if (target.closest('.box')) {
+                    const box = target.closest('.box');
+                    if (box.classList.contains('completed')) return;
+
+                    if (selectedBox) {
+                        selectedBox.classList.remove('selected');
+                    }
+                    
+                    if (selectedBox === box) {
+                        selectedBox = null;
+                    } else {
+                        selectedBox = box;
+                        selectedBox.classList.add('selected');
+                    }
+                }
+                else if (target.classList.contains('clickable-card') && selectedBox) {
+                    const card = target;
+                    const cardAngle = parseInt(card.dataset.angle);
+                    const correctAngle = parseInt(selectedBox.dataset.correct);
+                    const config = stagesConfig[currentStage];
+
+                    if (cardAngle === correctAngle) {
+                        updateScore(score + 10);
+                        const droppedCard = card.cloneNode(true);
+                        droppedCard.className = 'dropped angle-card';
+                        selectedBox.querySelector('.card-display').appendChild(droppedCard);
+                        selectedBox.classList.add('completed');
+                        selectedBox.classList.remove('selected');
+                        card.style.visibility = 'hidden';
+                        
+                        selectedBox = null;
+                        completedBoxes++;
+
+                        if (completedBoxes === 4) {
+                            clearInterval(timerInterval);
+                            if (config.nextStage) {
+                                showMessage(`Harika! Seviye ${currentStage} tamamlandı.`, 'success', () => setupStage(config.nextStage));
+                            } else {
+                                showMessage(`🎉 TEBRİKLER! 🎉<br>Etkinliği ${score} puanla bitirdiniz!`, 'success');
+                            }
+                        }
+                    } else {
+                        updateScore(score - 5);
+                        let errorMessage = '';
+                        if (config.totalAngle === 90) {
+                            errorMessage = 'Yanlış eşleştirme! Tümler iki açının toplamının 90° olduğunu hatırlayalım.';
+                        } else {
+                            errorMessage = 'Yanlış eşleştirme! Bütünler iki açının toplamının 180° olduğunu hatırlayalım.';
+                        }
+                        
+                        showMessage(errorMessage, 'error');
+                        selectedBox.classList.remove('selected');
+                        selectedBox = null;
+                    }
+                }
+            });
+            
+            function launchActivity() {
+                updateScore(0);
+                clearInterval(timerInterval);
+                setupStage(1);
+            }
+            
+            instructionIcon.addEventListener('click', () => {
+                const instructionHTML = `
+                    <h2>Açı Kutuları Etkinliğine Hoş Geldin!</h2>
+                    <ul>
+                        <li><strong>Nasıl Oynanır:</strong> Önce size verilen turuncu kutulardan birini, sonra o kutuyla ilgili olan mavi kartı işaretleyiniz.</li>
+                        <li><strong>Puanlama:</strong> Her doğru eşleşme <strong>10 Puan</strong> kazandırır, her yanlış eşleşme <strong>5 Puan</strong> kaybettirir.</li>
+                        <li><strong>Seviyeler:</strong> Etkinlik 4 seviyeden oluşur. İlerledikçe, zamana karşı yarışacağınız daha zorlu seviyeler sizi bekliyor!</li>
+                    </ul>
+                `;
+                showMessage(instructionHTML, 'instruction');
+            });
+            
+            restartButton.addEventListener('click', launchActivity);
+            
+            launchActivity();
+        });
+    </script>
+</body></html>
