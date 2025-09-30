@@ -1,0 +1,298 @@
+<html lang="tr"><head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Birim Karelerle Alan ve Çevre</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+    <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@700&amp;family=Open+Sans:wght@400;700&amp;display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary-color: #3A5B94; --primary-color-darker: #2c4776; --primary-color-lighter: #eaf0f9;
+            --primary-color-rgba: rgba(58, 91, 148, 0.25); --success-color: #28a745; --suggestion-color: #ffc107;
+            --error-color: #dc3545; --bg-color: #abcfed; --container-bg: #ffffff; --text-color: #333333;
+            --border-color: #dddddd; --font-family-base: 'Open Sans', 'Helveticasinav', sans-serif;
+            --font-family-special: 'Caveat', 'Aptos', cursive;
+        }
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: var(--font-family-base); background-color: var(--bg-color); color: var(--text-color);
+            display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 1rem;
+        }
+        .scorm-container {
+            width: 100%; max-width: 1100px; background-color: var(--container-bg); border-radius: 16px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15); padding: 1.5rem; text-align: center;
+            border: 1px solid var(--border-color);
+        }
+        .etkinlik-header {
+            display: flex; justify-content: flex-end; align-items: center; gap: 0.5rem;
+            margin-bottom: 1rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border-color);
+        }
+        .utility-btn {
+            background: none; border: 2px solid transparent; border-radius: 50%; width: 44px; height: 44px;
+            cursor: pointer; display: flex; justify-content: center; align-items: center; color: var(--primary-color);
+            transition: background-color 0.2s, color 0.2s, border-color 0.2s;
+        }
+        .utility-btn:hover { background-color: var(--primary-color-lighter); }
+        .utility-btn:focus-visible { outline: none; border-color: var(--primary-color); }
+        .utility-btn svg { width: 24px; height: 24px; }
+        main { padding: 0 1rem; }
+        #talimatlar-bolumu {
+            color: #555; font-size: clamp(1rem, 2.5vw, 1.2rem); margin-bottom: 1.5rem;
+            min-height: 4.5rem; line-height: 1.6;
+        }
+        #etkinlik-alani { display: flex; justify-content: center; margin-bottom: 2rem; }
+        #grid-container {
+            width: 480px; height: 360px; position: relative; background-color: #fdfdfd;
+            /* Kareli zeminin çizgilerini kalınlaştırmak ve koyulaştırmak için yapılan değişiklikler */
+            background-image:
+                linear-gradient(rgba(0,0,0,0.2) 2px, transparent 2px), /* Kalınlaştırma (2px) ve koyulaştırma (0.2) */
+                linear-gradient(90deg, rgba(0,0,0,0.2) 2px, transparent 2px); /* Kalınlaştırma (2px) ve koyulaştırma (0.2) */
+            border: 1px solid #ccc;
+        }
+        .rectangle { position: absolute; box-sizing: border-box; }
+        #shape-container { overflow: hidden; }
+        #cutout-mask {
+            background-color: transparent;
+            box-shadow: 0 0 0 1px var(--error-color), 0 0 0 100vmax rgba(220, 53, 69, 0.8);
+        }
+        #kontrol-paneli {
+            display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 1rem;
+        }
+        #cevap-input {
+            padding: 0.75rem; border-radius: 8px; border: 1px solid var(--border-color);
+            font-size: clamp(1.1rem, 3vw, 1.25rem); width: 150px; text-align: center;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        #cevap-input:focus { outline: none; border-color: var(--primary-color); box-shadow: 0 0 0 3px var(--primary-color-rgba); }
+        .btn {
+            padding: 0.75rem 1.25rem; min-width: 44px; min-height: 44px; border-radius: 8px; border: none;
+            font-size: clamp(0.9rem, 2.5vw, 1.1rem); font-weight: bold; cursor: pointer;
+            transition: background-color 0.2s, transform 0.1s; display: inline-flex;
+            justify-content: center; align-items: center;
+        }
+        .btn:active { transform: translateY(1px); }
+        .btn:focus-visible { outline: 3px solid var(--primary-color); outline-offset: 2px; }
+        .btn-primary { background-color: var(--primary-color); color: white; }
+        .btn-primary:hover { background-color: var(--primary-color-darker); }
+        .btn-success { background-color: var(--success-color); color: white; }
+        #geri-bildirim-alani {
+            margin-top: 1.5rem; font-size: clamp(1rem, 2.5vw, 1.2rem); font-weight: bold;
+            min-height: 2rem; padding: 0.5rem; border-radius: 8px;
+        }
+        .correct { color: var(--success-color); background-color: #eaf6ec; }
+        .incorrect { color: var(--error-color); background-color: #fbebec; }
+        .suggestion { color: #856404; background-color: #fff3cd; }
+        .modal {
+            display: none; position: fixed; z-index: 1000; left: 0; top: 0;
+            width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.5);
+        }
+        .modal-content {
+            background-color: #fefefe; margin: 15% auto; padding: 2rem; border: 1px solid #888;
+            width: 90%; max-width: 500px; border-radius: 12px; text-align: left; position: relative;
+        }
+        .modal-close-btn {
+            position: absolute; top: 1rem; right: 1rem; color: #aaa; font-size: 28px; font-weight: bold;
+            border: none; background: none; cursor: pointer;
+            padding: 0; width: 30px; height: 30px; line-height: 30px; text-align: center;
+        }
+        @media (max-width: 768px) {
+            .scorm-container { padding: 1rem; }
+            #grid-container { width: 100%; max-width: 480px; height: auto; aspect-ratio: 4 / 3; }
+        }
+        @media (max-width: 480px) {
+            #kontrol-paneli { flex-direction: column; width: 100%; }
+            .btn, #cevap-input { width: 100%; max-width: 280px; }
+        }
+    </style>
+    <script src="scorm_api.js"></script>
+</head>
+<body>
+
+    <div class="scorm-container">
+         <header class="etkinlik-header">
+            <button id="talimatlar-btn" class="utility-btn" aria-label="Talimatları Görüntüle">
+                <svg role="img" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"></path></svg>
+            </button>
+            <button id="bitir-btn" class="utility-btn" aria-label="Etkinliği Bitir">
+                <svg role="img" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"></path></svg>
+            </button>
+        </header>
+        <main>
+            <section id="talimatlar-bolumu" role="region" aria-label="Etkinlik Talimatı">Her bir küçük kare 1 birimkare olduğuna göre, kırmızı bölgenin <strong>alanını</strong> bulalım.</section>
+            <section id="etkinlik-alani" aria-label="Şekil Gösterim Alanı"><div id="grid-container" style="background-size: 39.8333px 39.8333px;"><div id="shape-container" class="rectangle" style="width: 199.167px; height: 159.333px; left: 199.167px; top: 79.6667px;"><div id="cutout-mask" class="rectangle" style="width: 119.5px; height: 79.6667px; left: 0px; top: 0px;"></div></div></div></section>
+            <section id="kontrol-paneli" role="group" aria-label="Cevap Kontrol Paneli"><input type="number" id="cevap-input" placeholder="Sonuç..." aria-label="Cevabınızı buraya yazın"><button id="kontrol-et-btn" class="btn btn-primary" style="display: inline-flex;">Kontrol Et</button><button id="yeni-soru-btn" class="btn btn-success" style="display: none;">Yeni Soru</button></section>
+        </main>
+        <footer><p id="geri-bildirim-alani" aria-live="polite" class=""></p></footer>
+    </div>
+    <div id="talimatlar-modal" class="modal"><div class="modal-content"><button class="modal-close-btn" aria-label="Kapat">×</button><h2 style="font-family: var(--font-family-special); margin-bottom: 1rem; color: var(--primary-color);">Nasıl Oynanır?</h2><p>Ekranda gördüğün kırmızı renkli şeklin alanını veya çevresini hesaplamalısın.</p><ul><li style="margin: 0.5rem 0;"><strong>Alan sorulduğunda:</strong> Şeklin kaç tane küçük kareden oluştuğunu bul.</li><li style="margin: 0.5rem 0;"><strong>Çevre sorulduğunda:</strong> Şeklin dış kenarlarının toplam uzunluğunu bul.</li><li style="margin: 0.5rem 0;">Unutma, her küçük karenin bir kenarı 1 birim uzunluğundadır.</li></ul><p style="margin-top: 1rem;">Sonucu kutucuğa yaz ve "Kontrol Et" butonuna tıkla.</p></div></div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const talimatlarMetni = document.getElementById('talimatlar-bolumu');
+            const gridContainer = document.getElementById('grid-container');
+            const shapeContainer = document.getElementById('shape-container');
+            const cutoutMask = document.getElementById('cutout-mask');
+            const cevapInput = document.getElementById('cevap-input');
+            const kontrolEtBtn = document.getElementById('kontrol-et-btn');
+            const yeniSoruBtn = document.getElementById('yeni-soru-btn');
+            const geriBildirimAlani = document.getElementById('geri-bildirim-alani');
+            const bitirBtn = document.getElementById('bitir-btn');
+            const talimatlarBtn = document.getElementById('talimatlar-btn');
+            const talimatlarModal = document.getElementById('talimatlar-modal');
+            const modalCloseBtn = talimatlarModal.querySelector('.modal-close-btn');
+
+            let dogruCevap = 0, puan = 0, denemeSayisi = 0, soruSayisi = 0, mevcutMod = 'area', startTime;
+            const TOPLAM_SORU = 10, gridGenislikBirim = 12, gridYukseklikBirim = 9;
+            let birimBoyutu = 40, mevcutSekilVerileri = null;
+
+            function guncelleGridBirimBoyutu() {
+                const containerWidth = gridContainer.clientWidth;
+                birimBoyutu = containerWidth / gridGenislikBirim;
+                gridContainer.style.backgroundSize = `${birimBoyutu}px ${birimBoyutu}px`;
+            }
+
+            function sekliCiz() {
+                if (mevcutSekilVerileri) {
+                    const { ana: anaDikdortgen, kesik: kesikDikdortgen } = mevcutSekilVerileri;
+                    guncelleGridBirimBoyutu();
+                    shapeContainer.style.cssText = `width:${anaDikdortgen.w * birimBoyutu}px; height:${anaDikdortgen.h * birimBoyutu}px; left:${anaDikdortgen.x * birimBoyutu}px; top:${anaDikdortgen.y * birimBoyutu}px;`;
+                    cutoutMask.style.cssText = `width:${kesikDikdortgen.w * birimBoyutu}px; height:${kesikDikdortgen.h * birimBoyutu}px; left:${kesikDikdortgen.offsetX * birimBoyutu}px; top:${kesikDikdortgen.offsetY * birimBoyutu}px;`;
+                }
+            }
+
+            function soruVerileriniOlustur() {
+                const ana = { w: Math.floor(4 * Math.random()) + 5, h: Math.floor(3 * Math.random()) + 4 };
+                ana.x = Math.floor(Math.random() * (gridGenislikBirim - ana.w + 1));
+                ana.y = Math.floor(Math.random() * (gridYukseklikBirim - ana.h + 1));
+
+                const kesik = { w: Math.floor(Math.random() * (ana.w - 3)) + 2, h: Math.floor(Math.random() * (ana.h - 3)) + 2 };
+                let cevreKesikDerinligi;
+                let sekilTuru = Math.floor(4 * Math.random());
+                switch (sekilTuru) {
+                    case 0: // Köşe kesik (sol üst)
+                        kesik.offsetX = 0; kesik.offsetY = 0;
+                        break;
+                    case 1: // Köşe kesik (sağ alt)
+                        kesik.offsetX = ana.w - kesik.w; kesik.offsetY = ana.h - kesik.h;
+                        break;
+                    case 2: // Kenar kesik (üst)
+                        kesik.offsetX = Math.floor(Math.random() * (ana.w - kesik.w)); kesik.offsetY = 0;
+                        cevreKesikDerinligi = kesik.h;
+                        break;
+                    default: // İç kesik
+                        kesik.offsetX = Math.floor(Math.random() * (ana.w - kesik.w));
+                        kesik.offsetY = Math.floor(Math.random() * (ana.h - kesik.h));
+                }
+                mevcutSekilVerileri = { ana: ana, kesik: kesik, sekilTuru: sekilTuru, cevreKesikDerinligi: cevreKesikDerinligi };
+            }
+
+            function soruUret() {
+                soruVerileriniOlustur();
+                sekliCiz();
+                const { ana, kesik, sekilTuru, cevreKesikDerinligi } = mevcutSekilVerileri;
+
+                if (mevcutMod === 'area') {
+                    talimatlarMetni.innerHTML = "Her bir küçük kare 1 birimkare olduğuna göre, kırmızı bölgenin <strong>alanını</strong> bulalım.";
+                    dogruCevap = (ana.w * ana.h) - (kesik.w * kesik.h);
+                } else {
+                    talimatlarMetni.innerHTML = "Her bir küçük karenin kenarı 1 birim olduğuna göre, kırmızı bölgenin <strong>çevresini</strong> bulalım.";
+                    if (sekilTuru <= 1) { // Köşe kesikler
+                        dogruCevap = 2 * (ana.w + ana.h);
+                    } else if (sekilTuru === 2) { // Kenar kesik
+                        dogruCevap = 2 * (ana.w + ana.h) + (2 * cevreKesikDerinligi);
+                    } else { // İç kesik
+                        dogruCevap = 2 * (ana.w + ana.h) + 2 * (kesik.w + kesik.h);
+                    }
+                }
+            }
+
+            function cevabiKontrolEt() {
+                denemeSayisi++;
+                const kullaniciCevabi = parseInt(cevapInput.value, 10);
+                geriBildirimAlani.className = '';
+
+                if (isNaN(kullaniciCevabi)) {
+                    geriBildirimAlani.textContent = "Lütfen bir sayı yazmayı unutma.";
+                    geriBildirimAlani.classList.add('suggestion');
+                } else if (kullaniciCevabi === dogruCevap) {
+                    puan += 10;
+                    geriBildirimAlani.textContent = `Harika! Doğru cevap ${dogruCevap} ${mevcutMod === 'area' ? "birimkare" : "birim"}.`;
+                    geriBildirimAlani.classList.add('correct');
+                    kontrolEtBtn.style.display = 'none';
+                    yeniSoruBtn.style.display = 'inline-flex';
+                    cevapInput.disabled = true;
+                    if (soruSayisi === TOPLAM_SORU) {
+                        etkinligiTamamla();
+                    }
+                } else {
+                    geriBildirimAlani.textContent = "Bu sonuca çok yaklaştın. Haydi, tekrar deneyelim!";
+                    geriBildirimAlani.classList.add('incorrect');
+                }
+            }
+
+            function yeniSoruHazirla() {
+                soruSayisi++;
+                if (soruSayisi > TOPLAM_SORU) {
+                    etkinligiTamamla();
+                    return;
+                }
+                cevapInput.value = '';
+                geriBildirimAlani.textContent = '';
+                geriBildirimAlani.className = '';
+                cevapInput.disabled = false;
+                denemeSayisi = 0;
+                mevcutMod = Math.random() > 0.5 ? 'area' : 'perimeter';
+                kontrolEtBtn.style.display = 'inline-flex';
+                yeniSoruBtn.style.display = 'none';
+                soruUret();
+                cevapInput.focus();
+            }
+
+            function etkinligiTamamla() {
+                const gecenSure = Math.round((new Date().getTime() - startTime) / 1000);
+                talimatlarMetni.textContent = `Etkinliği başarıyla tamamladın! Toplam puanın: ${puan}`;
+                kontrolEtBtn.style.display = 'none';
+                yeniSoruBtn.style.display = 'none';
+                cevapInput.style.display = 'none';
+            }
+
+            function debounce(func, timeout = 250) {
+                let timer;
+                return (...args) => {
+                    clearTimeout(timer);
+                    timer = setTimeout(() => { func.apply(this, args); }, timeout);
+                };
+            }
+
+            function baslat() {
+                startTime = new Date().getTime();
+                guncelleGridBirimBoyutu();
+                window.addEventListener('resize', debounce(sekliCiz));
+                yeniSoruHazirla();
+
+                kontrolEtBtn.addEventListener('click', cevabiKontrolEt);
+                yeniSoruBtn.addEventListener('click', yeniSoruHazirla);
+                cevapInput.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') {
+                        kontrolEtBtn.click();
+                    }
+                });
+                cevapInput.addEventListener('touchend', () => cevapInput.focus()); // Mobil için
+                bitirBtn.addEventListener('click', () => { etkinligiTamamla(); });
+                
+                // Modal işlemleri
+                talimatlarBtn.addEventListener('click', () => talimatlarModal.style.display = "block");
+                modalCloseBtn.addEventListener('click', () => talimatlarModal.style.display = "none");
+                window.addEventListener('click', (event) => {
+                    if (event.target == talimatlarModal) {
+                        talimatlarModal.style.display = "none";
+                    }
+                });
+            }
+
+            baslat();
+        });
+    </script>
+
+</body></html>

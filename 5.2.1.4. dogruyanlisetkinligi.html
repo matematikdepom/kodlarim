@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Doğru-Yanlış Etkinliği (Mobil Uyumlu)</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #3b82f6; /* Modern mavi */
+            --success-color: #10b981; /* Canlı yeşil */
+            --error-color: #ef4444; /* Modern kırmızı */
+            --bg-color-start: #f0f9ff; /* Hafif mavi arka plan */
+            --bg-color-end: #e0f2fe; /* Hafif gradient sonu */
+            --container-bg: #ffffff; /* Beyaz konteyner */
+            --text-color: #1e293b; /* Koyu gri metin */
+            --star-filled-color: #f59e0b; /* Modern sarı */
+            --star-empty-color: #e2e8f0; /* Açık gri yıldız */
+            --shadow-color: rgba(0, 0, 0, 0.1);
+            --button-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, var(--bg-color-start), var(--bg-color-end));
+            color: var(--text-color);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 16px;
+        }
+
+        .container {
+            background: var(--container-bg);
+            padding: 40px;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px var(--shadow-color);
+            text-align: center;
+            max-width: 700px;
+            width: 100%;
+            min-height: 500px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 8px;
+            background: linear-gradient(to right, var(--primary-color), var(--success-color));
+        }
+
+        h1 {
+            font-size: 2.8em;
+            font-weight: 700;
+            margin-bottom: 12px;
+            color: var(--text-color);
+        }
+
+        p {
+            font-size: 1.2em;
+            line-height: 1.5;
+            margin-bottom: 24px;
+        }
+
+        .btn {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 16px 32px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 1.2em;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            margin: 8px;
+            box-shadow: var(--button-shadow);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(59, 130, 246, 0.3);
+            opacity: 0.9;
+        }
+
+        .btn.correct {
+            background: var(--success-color);
+            box-shadow: 0 6px 20px rgba(16, 185, 129, 0.3);
+        }
+
+        .btn.incorrect {
+            background: var(--error-color);
+            animation: shake 0.4s ease;
+            box-shadow: 0 6px 20px rgba(239, 68, 68, 0.3);
+        }
+
+        .btn:disabled {
+            cursor: not-allowed;
+            opacity: 0.6;
+            transform: none;
+        }
+
+        #quiz-screen, #end-screen {
+            display: none;
+        }
+
+        #progress-text {
+            font-size: 1.1em;
+            color: #64748b;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+
+        #question-text {
+            font-size: 1.6em;
+            min-height: 140px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+            background: #f8fafc;
+            border-radius: 12px;
+            box-shadow: inset 0 2px 4px var(--shadow-color);
+        }
+
+        .answer-buttons {
+            margin-top: 24px;
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-8px); }
+            75% { transform: translateX(8px); }
+        }
+
+        #detailed-results {
+            margin: 24px 0;
+            padding: 0 20px;
+        }
+
+        .result-category {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            font-size: 1.3em;
+            padding: 12px;
+            background: #f8fafc;
+            border-radius: 8px;
+        }
+
+        .category-name {
+            font-weight: 600;
+            text-align: left;
+        }
+
+        .stars {
+            font-size: 1.8em;
+            letter-spacing: 3px;
+        }
+
+        .filled-star {
+            color: var(--star-filled-color);
+        }
+
+        .empty-star {
+            color: var(--star-empty-color);
+        }
+
+        #total-result-text {
+            font-size: 1.2em;
+            font-weight: 600;
+            margin-top: 24px;
+            color: var(--text-color);
+        }
+
+        .footer-text {
+            position: absolute;
+            bottom: 16px;
+            right: 24px;
+            font-size: 0.9em;
+            color: #64748b;
+            font-weight: 600;
+        }
+    </style>
+    <script src="scorm_api.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div id="start-screen">
+            <h1>Doğru mu, Yanlış mı?</h1>
+            <p>Verilen ifadeleri oku ve doğru mu, yanlış mı olduklarına karar ver!</p>
+            <button id="start-btn" class="btn">Başla</button>
+        </div>
+        <div id="quiz-screen">
+            <p id="progress-text"></p>
+            <p id="question-text"></p>
+            <div class="answer-buttons">
+                <button id="true-btn" class="btn">Doğru</button>
+                <button id="false-btn" class="btn">Yanlış</button>
+            </div>
+        </div>
+        <div id="end-screen">
+            <h1 id="result-title"></h1>
+            <div id="detailed-results"></div>
+            <p id="total-result-text"></p>
+            <button id="restart-btn" class="btn">Tekrar Başla</button>
+        </div>
+        <div class="footer-text">Hazırlayan: Osman AYDOĞDU</div>
+    </div>
+    <script>
+        let isAudioInitialized = false;
+        const synth = new Tone.Synth().toDestination();
+        function playSuccessSound() { if (isAudioInitialized) synth.triggerAttackRelease("C5", "8n"); }
+        function playErrorSound() { if (isAudioInitialized) synth.triggerAttackRelease("A3", "8n"); }
+        function playClickSound() { if (!isAudioInitialized) return; const cS = new Tone.MembraneSynth().toDestination(); cS.triggerAttackRelease("C2", "8n"); }
+        function playEndSound() { if (!isAudioInitialized) return; const eS = new Tone.PolySynth(Tone.Synth).toDestination(); const n = Tone.now(); eS.triggerAttackRelease(["C4", "E4", "G4"], "8n", n); eS.triggerAttackRelease(["G4", "B4", "D5"], "8n", n + 0.2); eS.triggerAttackRelease(["C5", "E5", "G5"], "4n", n + 0.4); }
+
+        const sorular = {
+            bilgi: [
+                { text: '12 345 678 sayısında "345" sayısı binler bölüğündedir.', answer: true },
+                { text: "Milyarlar bölüğü, bir sayının en sağındaki bölüktür.", answer: false },
+                { text: '"Yüz iki milyon on beş bin üç" sayısının rakamlarla yazılışı 102 015 003\'tür.', answer: true },
+                { text: "Her bölükte her zaman üç rakam bulunmak zorundadır.", answer: false },
+                { text: "5 468 709 123 sayısında milyarlar bölüğündeki sayı 5'tir.", answer: true }
+            ],
+            kavrama: [
+                { text: '456 456 456 sayısındaki tüm "4" rakamlarının basamak değerleri birbirinden farklıdır.', answer: true },
+                { text: 'Bir sayıyı okurken "birler" bölüğünün adını söyleriz.', answer: false },
+                { text: "Bir sayının soluna yeni bir basamak eklemek, sayının değerini her zaman artırır.", answer: true },
+                { text: "987 654 321 sayısının milyonlar bölüğü ile binler bölüğündeki rakamların toplamı eşittir.", answer: false },
+                { text: '"Sekiz milyar seksen bin sekiz" sayısında milyonlar bölüğünde "0" rakamı bulunur.', answer: true }
+            ],
+            uygulama: [
+                { text: "7 rakamını on milyonlar basamağında kullanarak rakamları farklı 8 basamaklı bir sayı yazarsak, bu rakamın basamak değeri 70 000 000 olur.", answer: true },
+                { text: "Türkiye'nin nüfusu yaklaşık 85 milyondur. Bu sayıyı yazarken milyarlar bölüğünü kullanırız.", answer: false },
+                { text: "5 000 000 sayısı okunurken \"beş milyon\"’ denir.", answer: true },
+                { text: "Elimizdeki 1, 2, 3, 4, 5, 6, 7 rakamları ile yazılabilecek 7 basamaklı en büyük sayının binler basamağında 3 rakamı bulunur.", answer: false },
+                { text: "Bir abaküste milyonlar bölüğüne 1, binler bölüğüne 23 ve birler bölüğüne 45 boncuk dizilerek sayı oluşturulamaz.", answer: true }
+            ]
+        };
+
+        const TOTAL_QUESTIONS = sorular.bilgi.length + sorular.kavrama.length + sorular.uygulama.length;
+        const startScreen = document.getElementById('start-screen');
+        const quizScreen = document.getElementById('quiz-screen');
+        const endScreen = document.getElementById('end-screen');
+        const startBtn = document.getElementById('start-btn');
+        const restartBtn = document.getElementById('restart-btn');
+        const progressText = document.getElementById('progress-text');
+        const questionText = document.getElementById('question-text');
+        const trueBtn = document.getElementById('true-btn');
+        const falseBtn = document.getElementById('false-btn');
+        const resultTitle = document.getElementById('result-title');
+        const detailedResults = document.getElementById('detailed-results');
+        const totalResultText = document.getElementById('total-result-text');
+        let currentQuestionIndex = 0;
+        let scores = { bilgi: 0, kavrama: 0, uygulama: 0 };
+        let shuffledQuestions = [];
+
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+
+        startBtn.addEventListener('click', async () => {
+            if (!isAudioInitialized) { await Tone.start(); isAudioInitialized = true; }
+            playClickSound();
+            startScreen.style.display = 'none';
+            quizScreen.style.display = 'flex';
+            quizScreen.style.flexDirection = 'column';
+            startGame();
+        });
+
+        restartBtn.addEventListener('click', () => {
+            playClickSound();
+            endScreen.style.display = 'none';
+            startScreen.style.display = 'block';
+        });
+
+        trueBtn.addEventListener('click', () => selectAnswer(true));
+        falseBtn.addEventListener('click', () => selectAnswer(false));
+
+        function startGame() {
+            currentQuestionIndex = 0;
+            scores = { bilgi: 0, kavrama: 0, uygulama: 0 };
+            shuffleArray(sorular.bilgi);
+            shuffleArray(sorular.kavrama);
+            shuffleArray(sorular.uygulama);
+            shuffledQuestions = [...sorular.bilgi, ...sorular.kavrama, ...sorular.uygulama];
+            showQuestion();
+        }
+
+        function showQuestion() {
+            resetButtonStyles();
+            if (currentQuestionIndex < TOTAL_QUESTIONS) {
+                const question = shuffledQuestions[currentQuestionIndex];
+                progressText.textContent = `Soru ${currentQuestionIndex + 1} / ${TOTAL_QUESTIONS}`;
+                questionText.textContent = question.text;
+            } else {
+                showResults();
+            }
+        }
+
+        function selectAnswer(userAnswer) {
+            const isCorrect = userAnswer === shuffledQuestions[currentQuestionIndex].answer;
+            trueBtn.disabled = true;
+            falseBtn.disabled = true;
+            if (isCorrect) {
+                playSuccessSound();
+                if (currentQuestionIndex < 5) scores.bilgi++;
+                else if (currentQuestionIndex < 10) scores.kavrama++;
+                else scores.uygulama++;
+                const selectedBtn = userAnswer ? trueBtn : falseBtn;
+                selectedBtn.classList.add('correct');
+            } else {
+                playErrorSound();
+                const selectedBtn = userAnswer ? trueBtn : falseBtn;
+                selectedBtn.classList.add('incorrect');
+                const correctBtn = !userAnswer ? trueBtn : falseBtn;
+                correctBtn.classList.add('correct');
+            }
+            setTimeout(() => {
+                currentQuestionIndex++;
+                showQuestion();
+            }, 1500);
+        }
+
+        function resetButtonStyles() {
+            trueBtn.disabled = false;
+            falseBtn.disabled = false;
+            trueBtn.classList.remove('correct', 'incorrect');
+            falseBtn.classList.remove('correct', 'incorrect');
+        }
+
+        function generateStars(score, total = 5) {
+            const filled = '★'.repeat(score);
+            const empty = '★'.repeat(total - score);
+            return `<span class="filled-star">${filled}</span><span class="empty-star">${empty}</span>`;
+        }
+
+        function showResults() {
+            playEndSound();
+            quizScreen.style.display = 'none';
+            endScreen.style.display = 'block';
+            const totalScore = scores.bilgi + scores.kavrama + scores.uygulama;
+            const percentage = (totalScore / TOTAL_QUESTIONS) * 100;
+
+            if (percentage >= 80) {
+                resultTitle.textContent = "Tebrikler, Harika İş!";
+            } else if (percentage >= 50) {
+                resultTitle.textContent = "Güzel Çaba, Devam Et!";
+            } else {
+                resultTitle.textContent = "Biraz Daha Çalışalım!";
+            }
+
+            detailedResults.innerHTML = `
+                <div class="result-category"><span class="category-name">Temel Bilgiler:</span><span class="stars">${generateStars(scores.bilgi)}</span></div>
+                <div class="result-category"><span class="category-name">Konuyu Anlama:</span><span class="stars">${generateStars(scores.kavrama)}</span></div>
+                <div class="result-category"><span class="category-name">Bilgini Kullanma:</span><span class="stars">${generateStars(scores.uygulama)}</span></div>
+            `;
+            totalResultText.textContent = `Toplam Başarın: ${TOTAL_QUESTIONS} soruda ${totalScore} doğru`;
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,745 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Adım Adım Problem Çözme</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --primary-color: #1e40af; /* Modern mavi */
+            --secondary-color: #f59e0b; /* Canlı sarı-turuncu */
+            --background-color: #f8fafc; /* Açık gri-mavi arka plan */
+            --card-bg: #ffffff; /* Kartlar için beyaz */
+            --text-color: #1f2937; /* Koyu gri metin */
+            --correct-color: #10b981; /* Modern yeşil */
+            --incorrect-color: #ef4444; /* Modern kırmızı */
+            --disabled-color: #e5e7eb; /* Hafif gri */
+            --shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+            --accent-color: #7c3aed; /* Mor vurgu rengi */
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html {
+            font-size: 16px;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            padding: 2rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, var(--background-color) 0%, #e0e7ff 100%);
+        }
+
+        main {
+            width: 100%;
+            max-width: 800px;
+            background-color: var(--card-bg);
+            padding: 2rem;
+            border-radius: 20px;
+            box-shadow: var(--shadow);
+            border-left: 6px solid var(--primary-color);
+            position: relative;
+            overflow: hidden;
+        }
+
+        main::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+        }
+
+        #problem-viewport {
+            text-align: center;
+            position: relative;
+            z-index: 1;
+        }
+
+        .problem-header {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+            color: var(--primary-color);
+            position: relative;
+        }
+
+        .problem-icon {
+            font-size: 3rem;
+            background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: iconPulse 2s ease-in-out infinite;
+        }
+
+        .problem-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+            letter-spacing: -0.025em;
+        }
+
+        .problem-text {
+            background-color: #f1f5f9;
+            padding: 1.5rem;
+            border-radius: 12px;
+            margin-bottom: 2rem;
+            text-align: left;
+            font-size: 1.1rem;
+            line-height: 1.8;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        #solution-steps-container {
+            text-align: left;
+            margin-top: 2rem;
+        }
+
+        .step-wrapper {
+            margin-bottom: 2rem;
+            padding: 1.5rem;
+            border: 2px solid var(--disabled-color);
+            border-radius: 12px;
+            opacity: 0.7;
+            transition: all 0.3s ease;
+        }
+
+        .step-wrapper.active {
+            opacity: 1;
+            border-color: var(--secondary-color);
+            background-color: #fff7ed;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+
+        .step-question {
+            font-weight: 600;
+            font-size: 1.2rem;
+            margin-bottom: 1rem;
+            color: var(--primary-color);
+        }
+
+        .options-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 0.75rem;
+        }
+
+        .option-btn {
+            width: 100%;
+            padding: 12px;
+            font-family: 'Inter', sans-serif;
+            font-size: 1rem;
+            font-weight: 500;
+            border: 2px solid var(--disabled-color);
+            border-radius: 10px;
+            background-color: var(--card-bg);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .option-btn:not(:disabled):hover {
+            border-color: var(--secondary-color);
+            background-color: #fef3c7;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .option-btn.correct {
+            background-color: #d1fae5;
+            border-color: var(--correct-color);
+            color: var(--text-color);
+            font-weight: 600;
+        }
+
+        .option-btn.incorrect {
+            background-color: #fee2e2;
+            border-color: var(--incorrect-color);
+            color: var(--text-color);
+            animation: shake 0.4s ease;
+        }
+
+        .step-explanation {
+            margin-top: 1.5rem;
+            padding: 1rem;
+            background-color: #f0fdf4;
+            border-radius: 10px;
+            font-weight: 500;
+            color: var(--text-color);
+            border-left: 4px solid var(--correct-color);
+        }
+
+        #final-feedback {
+            text-align: center;
+            padding: 1.5rem;
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            background-color: #dbeafe;
+            border-radius: 12px;
+            margin-top: 2rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+
+        #navigation-controls {
+            display: flex;
+            justify-content: center;
+            gap: 1.5rem;
+            flex-wrap: wrap;
+            margin-top: 2.5rem;
+            padding-top: 2rem;
+            border-top: 2px solid var(--disabled-color);
+        }
+
+        .nav-btn {
+            padding: 14px 40px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        #new-problem-btn {
+            background-color: var(--secondary-color);
+            color: white;
+        }
+
+        #new-problem-btn:hover {
+            background-color: #d97706;
+            transform: translateY(-3px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        #finish-btn {
+            background-color: var(--accent-color);
+            color: white;
+        }
+
+        #finish-btn:hover {
+            background-color: #6d28d9;
+            transform: translateY(-3px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .footer-credits {
+            text-align: center;
+            font-size: 0.9rem;
+            color: var(--text-color);
+            opacity: 0.7;
+            margin-top: 2rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--disabled-color);
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-6px); }
+            75% { transform: translateX(6px); }
+        }
+
+        @keyframes iconPulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        @media (min-width: 600px) {
+            .options-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+            main {
+                padding: 3rem;
+            }
+            .problem-title {
+                font-size: 2rem;
+            }
+            .problem-icon {
+                font-size: 3.5rem;
+            }
+        }
+
+        @media (min-width: 1024px) {
+            main {
+                max-width: 900px;
+            }
+        }
+    </style>
+    <script src="scorm_api.js"></script>
+</head>
+<body>
+    <main>
+        <div id="problem-viewport">
+            <div class="problem-header">
+                <span class="problem-icon">♻️</span>
+                <h2 class="problem-title">Geri Dönüşüm Kampanyası</h2>
+            </div>
+            <p class="problem-text">Bir belediye geri dönüşüm kampanyasında: Okullar <strong>1650</strong> plastik şişe, evler ise <strong>2780</strong> plastik şişe topladı. Ancak bu şişelerden <strong>430</strong> tanesi geri dönüşüme uygun olmadığı için ayrıldı. <br><strong>Hedef 5000 şişe ise, kampanyada kaç şişeye daha ihtiyaç vardır?</strong></p>
+            <div id="solution-steps-container">
+                <div class="step-wrapper active">
+                    <p class="step-question">1. Adım: İlk olarak ne yapmalıyız?</p>
+                    <div class="options-grid">
+                        <button class="option-btn" data-index="0">Evlerden toplanan şişelerden uygun olmayanları çıkarmalıyız.</button>
+                        <button class="option-btn" data-index="1">Okul ve evlerden toplanan toplam şişe sayısını bulmalıyız.</button>
+                        <button class="option-btn" data-index="2">Hedef sayıdan okulun topladığını çıkarmalıyız.</button>
+                    </div>
+                    <div class="step-explanation" style="display: none;"></div>
+                </div>
+            </div>
+            <div id="final-feedback" style="display: none;"></div>
+        </div>
+
+        <div id="navigation-controls">
+            <button id="finish-btn" class="nav-btn">Etkinliği Bitir</button>
+            <button id="new-problem-btn" class="nav-btn">Yeni Problem</button>
+        </div>
+
+        <div class="footer-credits">Hazırlayan: Osman AYDOĞDU</div>
+    </main>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const problems = [
+            {
+                icon: '♻️', title: 'Geri Dönüşüm Kampanyası',
+                text: 'Bir belediye geri dönüşüm kampanyasında: Okullar <strong>1650</strong> plastik şişe, evler ise <strong>2780</strong> plastik şişe topladı. Ancak bu şişelerden <strong>430</strong> tanesi geri dönüşüme uygun olmadığı için ayrıldı. <br><strong>Hedef 5000 şişe ise, kampanyada kaç şişeye daha ihtiyaç vardır?</strong>',
+                steps: [
+                    {
+                        question: '1. Adım: İlk olarak ne yapmalıyız?',
+                        options: ['Evlerden toplanan şişelerden uygun olmayanları çıkarmalıyız.', 'Okul ve evlerden toplanan toplam şişe sayısını bulmalıyız.', 'Hedef sayıdan okulun topladığını çıkarmalıyız.'],
+                        correctAnswerIndex: 1,
+                        explanation: 'Harika! Toplam şişeyi bulalım: 1650 + 2780 = <strong>4430 şişe</strong>'
+                    },
+                    {
+                        question: '2. Adım: Şimdi geri dönüşüme uygun şişe sayısını nasıl buluruz?',
+                        options: ['Toplam şişe sayısına uygun olmayanları eklemeliyiz.', 'Hedef sayıdan toplam şişe sayısını çıkarmalıyız.', 'Toplam şişe sayısından uygun olmayan 430 şişeyi çıkarmalıyız.'],
+                        correctAnswerIndex: 2,
+                        explanation: 'Kesinlikle! Uygun şişe sayısı: 4430 - 430 = <strong>4000 şişe</strong>'
+                    },
+                    {
+                        question: '3. Adım: Son olarak hedefe ulaşmak için kaç şişe gerektiğini nasıl hesaplarız?',
+                        options: ['Hedef olan 5000\'den, elimizdeki uygun 4000 şişeyi çıkararak.', 'Hedefe, elimizdeki şişe sayısını ekleyerek.', 'Toplam şişe sayısından hedefi çıkararak.'],
+                        correctAnswerIndex: 0,
+                        explanation: 'Doğru! Eksik şişe sayısı: 5000 - 4000 = <strong>1000 şişe</strong>'
+                    }
+                ]
+            },
+            {
+                icon: '📚', title: 'Kitap Bağışı',
+                text: 'Bir dernek, köy okuluna kitap bağışı yapıyor. Şu ana kadar <strong>2350</strong> hikaye kitabı, <strong>1820</strong> masal kitabı ve <strong>900</strong> ders kitabı gönderildi. Ancak taşıma sırasında <strong>130</strong> kitap zarar gördü. <br><strong>Hedef 5500 kitap olduğuna göre, kaç kitap daha gereklidir?</strong>',
+                steps: [
+                    {
+                        question: '1. Adım: Başlangıçta ne yapmalıyız?',
+                        options: ['Tüm türlerdeki kitapları toplayarak toplam bağış sayısını bulmalıyız.', 'Hikaye kitaplarından zarar görenleri çıkarmalıyız.', 'Hedef sayıdan ders kitabı sayısını çıkarmalıyız.'],
+                        correctAnswerIndex: 0,
+                        explanation: 'Süper! Toplam kitap sayısı: 2350 + 1820 + 900 = <strong>5070 kitap</strong>'
+                    },
+                    {
+                        question: '2. Adım: Şimdi okula ulaşan sağlam kitap sayısını nasıl buluruz?',
+                        options: ['Toplam kitap sayısından zarar gören 130 kitabı çıkararak.', 'Toplam kitap sayısına zarar görenleri ekleyerek.', 'Sadece hikaye ve masal kitaplarını toplayarak.'],
+                        correctAnswerIndex: 0,
+                        explanation: 'Çok doğru! Sağlam kitaplar: 5070 - 130 = <strong>4940 kitap</strong>'
+                    },
+                    {
+                        question: '3. Adım: Hedefe ulaşmak için gereken kitap sayısını nasıl hesaplarız?',
+                        options: ['Sağlam kitap sayısından hedefi çıkararak.', 'Hedef olan 5500\'den sağlam kitap sayısı olan 4940\'ı çıkararak.', 'Zarar gören kitap sayısını hedefle toplayarak.'],
+                        correctAnswerIndex: 1,
+                        explanation: 'Harikasın! Eksik kitap sayısı: 5500 - 4940 = <strong>560 kitap</strong>'
+                    }
+                ]
+            },
+            {
+                icon: '🌳', title: 'Fidan Dikme Şenliği',
+                text: 'Orman Haftası\'nda bir okul fidan dikme şenliği düzenledi. 5.&nbsp;sınıflar <strong>875</strong> fidan, 6.&nbsp;sınıflar ise <strong>950</strong> fidan dikti. Ancak dikilen fidanlardan <strong>70</strong> tanesi kuruduğu için tutmadı.<br><strong>Okulun hedefi 2000 sağlıklı fidan ise, hedefe kaç fidan kalmıştır?</strong>',
+                steps: [
+                    {
+                        question: '1. Adım: İlk olarak hangi işlemi yapmalıyız?',
+                        options: ['Toplam dikilen fidan sayısını bulmalıyız.', 'Kuruyan fidanları 5. sınıfların diktiğinden çıkarmalıyız.', 'Hedef sayıdan kuruyanları çıkarmalıyız.'],
+                        correctAnswerIndex: 0,
+                        explanation: 'Doğru! Toplam dikilen fidan: 875 + 950 = <strong>1825 fidan</strong>'
+                    },
+                    {
+                        question: '2. Adım: Şimdi sağlıklı, yani tutan fidan sayısını nasıl buluruz?',
+                        options: ['Toplam dikilen fidandan kuruyan 70 fidanı çıkararak.', 'Toplam dikilen fidana kuruyanları ekleyerek.', 'Hedef sayıya toplam dikilen fidanı ekleyerek.'],
+                        correctAnswerIndex: 0,
+                        explanation: 'Mükemmel! Sağlıklı fidan sayısı: 1825 - 70 = <strong>1755 fidan</strong>'
+                    },
+                    {
+                        question: '3. Adım: Hedefe ulaşmak için kaç fidan gerektiğini nasıl buluruz?',
+                        options: ['Sağlıklı fidanları hedefle toplayarak.', 'Hedef olan 2000\'den sağlıklı fidan sayısı olan 1755\'i çıkararak.', 'Toplam dikilen fidandan sağlıklı fidanları çıkararak.'],
+                        correctAnswerIndex: 1,
+                        explanation: 'İşte bu! Hedefe ulaşmak için: 2000 - 1755 = <strong>245 fidan</strong> daha gerekir.'
+                    }
+                ]
+            },
+            {
+                icon: '💧', title: 'Su Tasarrufu Kampanyası',
+                text: 'Bir şehir su tasarrufu kampanyasında: Okullar <strong>1200</strong> litre, evler <strong>2500</strong> litre tasarruf etti. Ancak bu miktardan <strong>300</strong> litre boşa gitti. <br><strong>Hedef 4000 litre ise, kaç litre daha tasarruf etmek gerekir?</strong>',
+                steps: [
+                    {
+                        question: '1. Adım: İlk olarak ne yapmalıyız?',
+                        options: ['Evlerden tasarruf edilen litreden boşa gidenleri çıkarmalıyız.', 'Okul ve evlerden tasarruf edilen toplam litre sayısını bulmalıyız.', 'Hedef sayıdan okulun tasarrufunu çıkarmalıyız.'],
+                        correctAnswerIndex: 1,
+                        explanation: 'Harika! Toplam tasarruf: 1200 + 2500 = <strong>3700 litre</strong>'
+                    },
+                    {
+                        question: '2. Adım: Şimdi etkili tasarruf miktarını nasıl buluruz?',
+                        options: ['Toplam tasarrufa boşa gidenleri eklemeliyiz.', 'Hedef sayıdan toplam tasarrufu çıkarmalıyız.', 'Toplam tasarruftan boşa giden 300 litreyi çıkarmalıyız.'],
+                        correctAnswerIndex: 2,
+                        explanation: 'Kesinlikle! Etkili tasarruf: 3700 - 300 = <strong>3400 litre</strong>'
+                    },
+                    {
+                        question: '3. Adım: Son olarak hedefe ulaşmak için kaç litre gerektiğini nasıl hesaplarız?',
+                        options: ['Hedef olan 4000\'den, etkili 3400 litreyi çıkararak.', 'Hedefe, etkili tasarruf miktarını ekleyerek.', 'Toplam tasarruftan hedefi çıkararak.'],
+                        correctAnswerIndex: 0,
+                        explanation: 'Doğru! Eksik miktar: 4000 - 3400 = <strong>600 litre</strong>'
+                    }
+                ]
+            },
+            {
+                icon: '🌿', title: 'Ağaçlandırma Projesi',
+                text: 'Bir köy ağaçlandırma projesinde: Köylüler <strong>500</strong> fidan, gönüllüler <strong>800</strong> fidan dikti. Ancak dikilenlerden <strong>100</strong> tanesi tutmadı. <br><strong>Hedef 1500 fidan ise, kaç fidan daha dikmek gerekir?</strong>',
+                steps: [
+                    {
+                        question: '1. Adım: İlk olarak ne yapmalıyız?',
+                        options: ['Gönüllülerin diktiğinden tutmayanları çıkarmalıyız.', 'Köylü ve gönüllülerin diktiği toplam fidan sayısını bulmalıyız.', 'Hedef sayıdan köylülerin diktiğini çıkarmalıyız.'],
+                        correctAnswerIndex: 1,
+                        explanation: 'Süper! Toplam fidan: 500 + 800 = <strong>1300 fidan</strong>'
+                    },
+                    {
+                        question: '2. Adım: Şimdi tutan fidan sayısını nasıl buluruz?',
+                        options: ['Toplam fidandan tutmayan 100 fidanı çıkararak.', 'Toplam fidana tutmayanları ekleyerek.', 'Hedef sayıya toplam fidanı ekleyerek.'],
+                        correctAnswerIndex: 0,
+                        explanation: 'Çok doğru! Tutan fidanlar: 1300 - 100 = <strong>1200 fidan</strong>'
+                    },
+                    {
+                        question: '3. Adım: Hedefe ulaşmak için gereken fidan sayısını nasıl hesaplarız?',
+                        options: ['Tutan fidan sayısından hedefi çıkararak.', 'Hedef olan 1500\'den tutan fidan sayısı olan 1200\'ü çıkararak.', 'Tutmayan fidan sayısını hedefle toplayarak.'],
+                        correctAnswerIndex: 1,
+                        explanation: 'Harikasın! Eksik fidan: 1500 - 1200 = <strong>300 fidan</strong>'
+                    }
+                ]
+            },
+            {
+                icon: '🍲', title: 'Yemek Bağışı',
+                text: 'Bir yardım derneği yemek bağışında: Şirketler <strong>3000</strong> porsiyon, bireyler <strong>1500</strong> porsiyon bağışladı. Ancak bunlardan <strong>200</strong> tanesi bozuldu. <br><strong>Hedef 5000 porsiyon ise, kaç porsiyon daha gerekir?</strong>',
+                steps: [
+                    {
+                        question: '1. Adım: İlk olarak hangi işlemi yapmalıyız?',
+                        options: ['Bireylerin bağışından bozulanları çıkarmalıyız.', 'Şirket ve bireylerin toplam bağış sayısını bulmalıyız.', 'Hedef sayıdan şirketlerin bağışını çıkarmalıyız.'],
+                        correctAnswerIndex: 1,
+                        explanation: 'Doğru! Toplam porsiyon: 3000 + 1500 = <strong>4500 porsiyon</strong>'
+                    },
+                    {
+                        question: '2. Adım: Şimdi kullanılabilir porsiyon sayısını nasıl buluruz?',
+                        options: ['Toplam porsiyondan bozulan 200 porsiyonu çıkararak.', 'Toplam porsiyona bozulanları ekleyerek.', 'Hedef sayıya toplam porsiyonu ekleyerek.'],
+                        correctAnswerIndex: 0,
+                        explanation: 'Mükemmel! Kullanılabilir porsiyon: 4500 - 200 = <strong>4300 porsiyon</strong>'
+                    },
+                    {
+                        question: '3. Adım: Hedefe ulaşmak için kaç porsiyon gerektiğini nasıl buluruz?',
+                        options: ['Kullanılabilir porsiyonları hedefle toplayarak.', 'Hedef olan 5000\'den kullanılabilir 4300 porsiyonu çıkararak.', 'Toplam porsiyondan kullanılabilir porsiyonları çıkararak.'],
+                        correctAnswerIndex: 1,
+                        explanation: 'İşte bu! Eksik porsiyon: 5000 - 4300 = <strong>700 porsiyon</strong>'
+                    }
+                ]
+            },
+            {
+                icon: '🩸', title: 'Kan Bağışı Kampanyası',
+                text: 'Bir hastane kan bağışı kampanyasında: Çalışanlar <strong>400</strong> ünite, öğrenciler <strong>600</strong> ünite bağışladı. Ancak bunlardan <strong>50</strong> tanesi uygun değildi. <br><strong>Hedef 1000 ünite ise, kaç ünite daha gerekir?</strong>',
+                steps: [
+                    {
+                        question: '1. Adım: İlk olarak ne yapmalıyız?',
+                        options: ['Öğrencilerin bağışından uygun olmayanları çıkarmalıyız.', 'Çalışan ve öğrencilerin toplam ünite sayısını bulmalıyız.', 'Hedef sayıdan çalışanların bağışını çıkarmalıyız.'],
+                        correctAnswerIndex: 1,
+                        explanation: 'Harika! Toplam ünite: 400 + 600 = <strong>1000 ünite</strong>'
+                    },
+                    {
+                        question: '2. Adım: Şimdi uygun ünite sayısını nasıl buluruz?',
+                        options: ['Toplam üniteden uygun olmayan 50 üniteyi çıkararak.', 'Toplam üniteye uygun olmayanları ekleyerek.', 'Hedef sayıya toplam üniteyi ekleyerek.'],
+                        correctAnswerIndex: 0,
+                        explanation: 'Kesinlikle! Uygun ünite: 1000 - 50 = <strong>950 ünite</strong>'
+                    },
+                    {
+                        question: '3. Adım: Son olarak hedefe ulaşmak için kaç ünite gerektiğini nasıl hesaplarız?',
+                        options: ['Hedef olan 1000\'den, uygun 950 üniteyi çıkararak.', 'Hedefe, uygun ünite sayısını ekleyerek.', 'Toplam üniteden hedefi çıkararak.'],
+                        correctAnswerIndex: 0,
+                        explanation: 'Doğru! Eksik ünite: 1000 - 950 = <strong>50 ünite</strong>'
+                    }
+                ]
+            },
+            {
+                icon: '👕', title: 'Giysi Toplama Kampanyası',
+                text: 'Bir yardım örgütü giysi toplamada: Mahalleler <strong>2000</strong> parça, dernekler <strong>3000</strong> parça topladı. Ancak bunlardan <strong>400</strong> tanesi eskiydi. <br><strong>Hedef 6000 parça ise, kaç parça daha gerekir?</strong>',
+                steps: [
+                    {
+                        question: '1. Adım: Başlangıçta ne yapmalıyız?',
+                        options: ['Derneklerin topladığından eskileri çıkarmalıyız.', 'Mahalle ve derneklerin toplam parça sayısını bulmalıyız.', 'Hedef sayıdan mahallelerin topladığını çıkarmalıyız.'],
+                        correctAnswerIndex: 1,
+                        explanation: 'Süper! Toplam parça: 2000 + 3000 = <strong>5000 parça</strong>'
+                    },
+                    {
+                        question: '2. Adım: Şimdi kullanılabilir parça sayısını nasıl buluruz?',
+                        options: ['Toplam parçadan eski 400 parçayı çıkararak.', 'Toplam parçaya eskileri ekleyerek.', 'Sadece mahalle ve dernek parçalarını toplayarak.'],
+                        correctAnswerIndex: 0,
+                        explanation: 'Çok doğru! Kullanılabilir parça: 5000 - 400 = <strong>4600 parça</strong>'
+                    },
+                    {
+                        question: '3. Adım: Hedefe ulaşmak için gereken parça sayısını nasıl hesaplarız?',
+                        options: ['Kullanılabilir parça sayısından hedefi çıkararak.', 'Hedef olan 6000\'den kullanılabilir 4600 parçayı çıkararak.', 'Eski parça sayısını hedefle toplayarak.'],
+                        correctAnswerIndex: 1,
+                        explanation: 'Harikasın! Eksik parça: 6000 - 4600 = <strong>1400 parça</strong>'
+                    }
+                ]
+            },
+            {
+                icon: '🗑️', title: 'Atık Toplama Etkinliği',
+                text: 'Bir fabrika atık toplama etkinliğinde: Fabrikalar <strong>5000</strong> kg, evler <strong>3000</strong> kg atık topladı. Ancak bunlardan <strong>800</strong> kg kirliydi. <br><strong>Hedef 10000 kg ise, kaç kg daha gerekir?</strong>',
+                steps: [
+                    {
+                        question: '1. Adım: İlk olarak hangi işlemi yapmalıyız?',
+                        options: ['Evlerin topladığından kirlileri çıkarmalıyız.', 'Fabrika ve evlerin toplam kg sayısını bulmalıyız.', 'Hedef sayıdan fabrikaların topladığını çıkarmalıyız.'],
+                        correctAnswerIndex: 1,
+                        explanation: 'Doğru! Toplam kg: 5000 + 3000 = <strong>8000 kg</strong>'
+                    },
+                    {
+                        question: '2. Adım: Şimdi temiz kg sayısını nasıl buluruz?',
+                        options: ['Toplam kg\'dan kirli 800 kg\'yi çıkararak.', 'Toplam kg\'ya kirlileri ekleyerek.', 'Hedef sayıya toplam kg\'yi ekleyerek.'],
+                        correctAnswerIndex: 0,
+                        explanation: 'Mükemmel! Temiz kg: 8000 - 800 = <strong>7200 kg</strong>'
+                    },
+                    {
+                        question: '3. Adım: Hedefe ulaşmak için kaç kg gerektiğini nasıl buluruz?',
+                        options: ['Temiz kg\'leri hedefle toplayarak.', 'Hedef olan 10000\'den temiz 7200 kg\'yi çıkararak.', 'Toplam kg\'dan temiz kg\'leri çıkararak.'],
+                        correctAnswerIndex: 1,
+                        explanation: 'İşte bu! Eksik kg: 10000 - 7200 = <strong>2800 kg</strong>'
+                    }
+                ]
+            },
+            {
+                icon: '✏️', title: 'Eğitim Malzemesi Toplama',
+                text: 'Bir okul eğitim malzemesi toplamada: Öğretmenler <strong>1000</strong> kalem, öğrenciler <strong>2000</strong> kalem topladı. Ancak bunlardan <strong>150</strong> tanesi kırık. <br><strong>Hedef 3000 kalem ise, kaç kalem daha gerekir?</strong>',
+                steps: [
+                    {
+                        question: '1. Adım: İlk olarak ne yapmalıyız?',
+                        options: ['Öğrencilerin topladığından kırıkları çıkarmalıyız.', 'Öğretmen ve öğrencilerin toplam kalem sayısını bulmalıyız.', 'Hedef sayıdan öğretmenlerin topladığını çıkarmalıyız.'],
+                        correctAnswerIndex: 1,
+                        explanation: 'Harika! Toplam kalem: 1000 + 2000 = <strong>3000 kalem</strong>'
+                    },
+                    {
+                        question: '2. Adım: Şimdi sağlam kalem sayısını nasıl buluruz?',
+                        options: ['Toplam kalemden kırık 150 kalemi çıkararak.', 'Toplam kaleme kırıkları ekleyerek.', 'Hedef sayıya toplam kalemi ekleyerek.'],
+                        correctAnswerIndex: 0,
+                        explanation: 'Kesinlikle! Sağlam kalem: 3000 - 150 = <strong>2850 kalem</strong>'
+                    },
+                    {
+                        question: '3. Adım: Son olarak hedefe ulaşmak için kaç kalem gerektiğini nasıl hesaplarız?',
+                        options: ['Hedef olan 3000\'den, sağlam 2850 kalemi çıkararak.', 'Hedefe, sağlam kalem sayısını ekleyerek.', 'Toplam kalemden hedefi çıkararak.'],
+                        correctAnswerIndex: 0,
+                        explanation: 'Doğru! Eksik kalem: 3000 - 2850 = <strong>150 kalem</strong>'
+                    }
+                ]
+            },
+            {
+                icon: '🎟️', title: 'Spor Etkinliği Bilet Satışı',
+                text: 'Bir spor kulübü bilet satışında: Takımlar <strong>1500</strong> bilet, bireyler <strong>2500</strong> bilet aldı. Ancak bunlardan <strong>300</strong> tanesi iade edildi. <br><strong>Hedef 4000 bilet ise, kaç bilet daha satmak gerekir?</strong>',
+                steps: [
+                    {
+                        question: '1. Adım: Başlangıçta ne yapmalıyız?',
+                        options: ['Bireylerin aldığından iadeleri çıkarmalıyız.', 'Takım ve bireylerin toplam bilet sayısını bulmalıyız.', 'Hedef sayıdan takımların aldığını çıkarmalıyız.'],
+                        correctAnswerIndex: 1,
+                        explanation: 'Süper! Toplam bilet: 1500 + 2500 = <strong>4000 bilet</strong>'
+                    },
+                    {
+                        question: '2. Adım: Şimdi net bilet sayısını nasıl buluruz?',
+                        options: ['Toplam biletten iade 300 bileti çıkararak.', 'Toplam bilete iadeleri ekleyerek.', 'Sadece takım ve birey biletlerini toplayarak.'],
+                        correctAnswerIndex: 0,
+                        explanation: 'Çok doğru! Net bilet: 4000 - 300 = <strong>3700 bilet</strong>'
+                    },
+                    {
+                        question: '3. Adım: Hedefe ulaşmak için gereken bilet sayısını nasıl hesaplarız?',
+                        options: ['Net bilet sayısından hedefi çıkararak.', 'Hedef olan 4000\'den net 3700 bileti çıkararak.', 'İade bilet sayısını hedefle toplayarak.'],
+                        correctAnswerIndex: 1,
+                        explanation: 'Harikasın! Eksik bilet: 4000 - 3700 = <strong>300 bilet</strong>'
+                    }
+                ]
+            },
+            {
+                icon: '💉', title: 'Sağlık Kampanyası Aşı Toplama',
+                text: 'Bir sağlık örgütü aşı toplamada: Klinikler <strong>2000</strong> aşı, eczaneler <strong>1500</strong> aşı sağladı. Ancak bunlardan <strong>100</strong> tanesinin son kullanma tarihi geçmiş. <br><strong>Hedef 4000 aşı ise, kaç aşı daha gerekir?</strong>',
+                steps: [
+                    {
+                        question: '1. Adım: İlk olarak hangi işlemi yapmalıyız?',
+                        options: ['Eczanelerin sağladığından geçmişleri çıkarmalıyız.', 'Klinik ve eczanelerin toplam aşı sayısını bulmalıyız.', 'Hedef sayıdan kliniklerin sağladığını çıkarmalıyız.'],
+                        correctAnswerIndex: 1,
+                        explanation: 'Doğru! Toplam aşı: 2000 + 1500 = <strong>3500 aşı</strong>'
+                    },
+                    {
+                        question: '2. Adım: Şimdi geçerli aşı sayısını nasıl buluruz?',
+                        options: ['Toplam aşıdan geçmiş 100 aşıyı çıkararak.', 'Toplam aşıya geçmişleri ekleyerek.', 'Hedef sayıya toplam aşıyı ekleyerek.'],
+                        correctAnswerIndex: 0,
+                        explanation: 'Mükemmel! Geçerli aşı: 3500 - 100 = <strong>3400 aşı</strong>'
+                    },
+                    {
+                        question: '3. Adım: Hedefe ulaşmak için kaç aşı gerektiğini nasıl buluruz?',
+                        options: ['Geçerli aşıları hedefle toplayarak.', 'Hedef olan 4000\'den geçerli 3400 aşıyı çıkararak.', 'Toplam aşıdan geçerli aşıları çıkararak.'],
+                        correctAnswerIndex: 1,
+                        explanation: 'İşte bu! Eksik aşı: 4000 - 3400 = <strong>600 aşı</strong>'
+                    }
+                ]
+            },
+            {
+                icon: '🧹', title: 'Çevre Temizliği Etkinliği',
+                text: 'Bir belediye çevre temizliğinde: Gönüllüler <strong>500</strong> torba çöp, belediye ekipleri <strong>800</strong> torba çöp topladı. Ancak bunlardan <strong>100</strong> torba geri bırakıldı. <br><strong>Hedef 1500 torba ise, kaç torba daha toplamak gerekir?</strong>',
+                steps: [
+                    {
+                        question: '1. Adım: İlk olarak ne yapmalıyız?',
+                        options: ['Belediye ekiplerinin topladığından geri bırakılanları çıkarmalıyız.', 'Gönüllü ve belediye ekiplerinin toplam torba sayısını bulmalıyız.', 'Hedef sayıdan gönüllülerin topladığını çıkarmalıyız.'],
+                        correctAnswerIndex: 1,
+                        explanation: 'Harika! Toplam torba: 500 + 800 = <strong>1300 torba</strong>'
+                    },
+                    {
+                        question: '2. Adım: Şimdi net torba sayısını nasıl buluruz?',
+                        options: ['Toplam torbadan geri bırakılan 100 torbayı çıkararak.', 'Toplam torbaya geri bırakılanları ekleyerek.', 'Hedef sayıya toplam torbayı ekleyerek.'],
+                        correctAnswerIndex: 0,
+                        explanation: 'Kesinlikle! Net torba: 1300 - 100 = <strong>1200 torba</strong>'
+                    },
+                    {
+                        question: '3. Adım: Son olarak hedefe ulaşmak için kaç torba gerektiğini nasıl hesaplarız?',
+                        options: ['Hedef olan 1500\'den, net 1200 torbayı çıkararak.', 'Hedefe, net torba sayısını ekleyerek.', 'Toplam torbadan hedefi çıkararak.'],
+                        correctAnswerIndex: 0,
+                        explanation: 'Doğru! Eksik torba: 1500 - 1200 = <strong>300 torba</strong>'
+                    }
+                ]
+            }
+        ];
+
+        const mainContainer = document.querySelector('main');
+        let problemViewport = document.getElementById('problem-viewport');
+        let newProblemBtn = document.getElementById('new-problem-btn');
+        let finishBtn = document.getElementById('finish-btn');
+        let currentProblemIndex = 0;
+        let currentStepIndex = 0;
+
+        function loadProblem(index) {
+            currentStepIndex = 0;
+            const problem = problems[index];
+            
+            problemViewport.innerHTML = `
+                <div class="problem-header">
+                    <span class="problem-icon">${problem.icon}</span>
+                    <h2 class="problem-title">${problem.title}</h2>
+                </div>
+                <p class="problem-text">${problem.text}</p>
+                <div id="solution-steps-container"></div>
+                <div id="final-feedback" style="display: none;"></div>
+            `;
+
+            renderStep(problem, currentStepIndex);
+        }
+
+        function renderStep(problem, stepIndex) {
+            const stepsContainer = document.getElementById('solution-steps-container');
+            if (!stepsContainer) return; 
+            const step = problem.steps[stepIndex];
+
+            const stepWrapper = document.createElement('div');
+            stepWrapper.className = 'step-wrapper';
+
+            let optionsHTML = '';
+            step.options.forEach((option, index) => {
+                optionsHTML += `<button class="option-btn" data-index="${index}">${option}</button>`;
+            });
+
+            stepWrapper.innerHTML = `
+                <p class="step-question">${step.question}</p>
+                <div class="options-grid">${optionsHTML}</div>
+                <div class="step-explanation" style="display: none;"></div>
+            `;
+
+            stepsContainer.appendChild(stepWrapper);
+
+            setTimeout(() => stepWrapper.classList.add('active'), 100);
+
+            stepWrapper.querySelectorAll('.option-btn').forEach(btn => {
+                btn.addEventListener('click', handleOptionClick);
+            });
+        }
+
+        function handleOptionClick(event) {
+            const selectedBtn = event.target;
+            const selectedIndex = parseInt(selectedBtn.dataset.index);
+            const problem = problems[currentProblemIndex];
+            const step = problem.steps[currentStepIndex];
+
+            const currentStepWrapper = selectedBtn.closest('.step-wrapper');
+
+            if (selectedIndex === step.correctAnswerIndex) {
+                selectedBtn.classList.add('correct');
+
+                currentStepWrapper.querySelectorAll('.option-btn').forEach(btn => {
+                    btn.disabled = true;
+                    if (!btn.classList.contains('correct')) btn.style.opacity = '0.6';
+                });
+
+                const explanationDiv = currentStepWrapper.querySelector('.step-explanation');
+                explanationDiv.innerHTML = step.explanation;
+                explanationDiv.style.display = 'block';
+
+                currentStepIndex++;
+                if (currentStepIndex < problem.steps.length) {
+                    setTimeout(() => renderStep(problem, currentStepIndex), 1000);
+                } else {
+                    setTimeout(() => {
+                        const finalFeedback = document.getElementById('final-feedback');
+                        if(finalFeedback) {
+                           finalFeedback.textContent = 'Tebrikler! Problemi başarıyla çözdün! 🎉';
+                           finalFeedback.style.display = 'block';
+                        }
+                    }, 1000);
+                }
+
+            } else {
+                selectedBtn.classList.add('incorrect');
+                setTimeout(() => selectedBtn.classList.remove('incorrect'), 800);
+            }
+        }
+        
+        function handleNewProblemClick() {
+            currentProblemIndex = (currentProblemIndex + 1) % problems.length;
+            loadProblem(currentProblemIndex);
+        }
+        
+        function handleFinishClick() {
+            window.close();
+        }
+
+        newProblemBtn.addEventListener('click', handleNewProblemClick);
+        finishBtn.addEventListener('click', handleFinishClick);
+
+        loadProblem(currentProblemIndex);
+    });
+    </script>
+</body>
+</html>

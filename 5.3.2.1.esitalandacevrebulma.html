@@ -1,0 +1,449 @@
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alan ve Çevre Etkinliği</title>
+    <style>
+        :root {
+            --primary-color: #3b82f6; /* Modern mavi */
+            --secondary-color: #10b981; /* Canlı yeşil */
+            --accent-color: #f59e0b; /* Canlı sarı */
+            --error-color: #ef4444; /* Modern kırmızı */
+            --bg-color: #f1f5f9; /* Açık gri-mavi arka plan */
+            --container-bg: #ffffff; /* Beyaz konteyner */
+            --text-color: #1e293b; /* Koyu gri-mavi metin */
+            --border-color: #e2e8f0; /* Hafif gri sınır */
+            --grid-line-color: #94a3b8; /* Modern grid çizgi rengi */
+            --unit-size: 20px; /* Daha büyük birim boyutu */
+        }
+
+        @media (max-width: 1024px) { :root { --unit-size: 16px; } }
+        @media (max-width: 768px) { :root { --unit-size: 12px; } }
+        @media (max-width: 480px) { :root { --unit-size: 10px; } }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: linear-gradient(135deg, var(--bg-color) 0%, #e0e7ff 100%); /* Modern gradient arka plan */
+            color: var(--text-color);
+            margin: 0;
+            padding: 1.5rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            box-sizing: border-box;
+            -webkit-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+
+        .container {
+            background-color: var(--container-bg);
+            padding: 2.5rem;
+            border-radius: 24px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+            text-align: center;
+            width: 100%;
+            max-width: calc(var(--unit-size) * 40 + 5rem);
+            box-sizing: border-box;
+            position: relative;
+            transition: transform 0.3s ease;
+        }
+
+        .container:hover {
+            transform: translateY(-5px); /* Hafif yükselme efekti */
+        }
+
+        h1 {
+            font-size: 1.8em;
+            margin-bottom: 2rem;
+            line-height: 1.4;
+            color: var(--primary-color);
+            font-weight: 600;
+        }
+
+        #grid-container {
+            width: calc(var(--unit-size) * 40);
+            height: calc(var(--unit-size) * 25);
+            background-image: 
+                linear-gradient(var(--grid-line-color) 1.5px, transparent 1.5px),
+                linear-gradient(to right, var(--grid-line-color) 1.5px, transparent 1.5px);
+            background-size: var(--unit-size) var(--unit-size);
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            position: relative;
+            margin: 2rem auto;
+            touch-action: none;
+            background-color: rgba(255, 255, 255, 0.9);
+        }
+
+        .rectangle {
+            position: absolute;
+            box-sizing: border-box;
+            background-color: rgba(59, 130, 246, 0.2);
+            border: 2px solid var(--primary-color);
+            border-radius: 0; /* Dikdörtgenlerin kenarları yuvarlatılmadan düz bırakıldı */
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .rectangle:hover {
+            transform: scale(1.03); /* Hafif büyüme efekti */
+        }
+
+        .rectangle.selected {
+            background-color: rgba(59, 130, 246, 0.5);
+            border-color: #1e40af;
+            border-width: 3px;
+            transform: scale(1.05);
+            border-radius: 0; /* Seçili durumda da düz kenarlar */
+        }
+
+        .rectangle.correct {
+            background-color: rgba(16, 185, 129, 0.4);
+            border-color: var(--secondary-color);
+            box-shadow: 0 0 15px rgba(16, 185, 129, 0.5);
+            border-radius: 0; /* Doğru durumda da düz kenarlar */
+        }
+
+        .rectangle.incorrect {
+            background-color: rgba(239, 68, 68, 0.4);
+            border-color: var(--error-color);
+            animation: shake 0.5s;
+            border-radius: 0; /* Yanlış durumda da düz kenarlar */
+        }
+
+        .rectangle.missed {
+            background-color: rgba(245, 158, 11, 0.4);
+            border-color: var(--accent-color);
+            border-radius: 0; /* Kaçırılan durumda da düz kenarlar */
+        }
+
+        .dim-label {
+            color: var(--text-color);
+            font-weight: 600;
+            font-size: calc(var(--unit-size) * 0.85);
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            text-align: center;
+            line-height: 1.2;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .dim-label.visible {
+            opacity: 1;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-6px); }
+            75% { transform: translateX(6px); }
+        }
+
+        .controls {
+            margin-top: 2rem;
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+        }
+
+        .btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 14px 28px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 1.2em;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn:hover {
+            background-color: #1e40af;
+            transform: translateY(-2px);
+        }
+
+        #restart-btn, #next-stage-btn {
+            background-color: var(--secondary-color);
+        }
+
+        #restart-btn:hover, #next-stage-btn:hover {
+            background-color: #059669;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        #start-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            padding: 1rem;
+            box-sizing: border-box;
+        }
+
+        #start-modal {
+            background-color: var(--container-bg);
+            padding: 3rem;
+            border-radius: 24px;
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+            text-align: center;
+            max-width: 600px;
+            width: 95%;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        #start-modal h2 {
+            font-size: 2em;
+            margin-top: 0;
+            margin-bottom: 1.5rem;
+            color: var(--primary-color);
+            font-weight: 700;
+        }
+
+        #start-modal p {
+            text-align: left;
+            margin: 1.2rem auto;
+            font-size: 1.2em;
+            line-height: 1.7;
+            color: var(--text-color);
+        }
+
+        #start-btn {
+            font-size: 1.6em;
+            padding: 16px 32px;
+            margin-top: 2rem;
+            border-radius: 12px;
+        }
+
+        .footer {
+            position: absolute;
+            bottom: 1rem;
+            right: 1.5rem;
+            font-size: 0.9em;
+            color: var(--text-color);
+            opacity: 0.7;
+            font-style: italic;
+        }
+    </style>
+    <script src="scorm_api.js"></script>
+</head>
+<body>
+    <div id="start-overlay">
+        <div id="start-modal">
+            <h2>Alan ve Çevre Macerası</h2>
+            <p>Bu etkinlikte, önce istenen alana sahip dikdörtgenlerin hepsini bulacaksın.</p>
+            <p>Daha sonra, bulduğun bu dikdörtgenler arasından çevresi en büyük ve en küçük olanları seçeceksin.</p>
+            <p>Hazır olduğunda maceraya başla!</p>
+            <button id="start-btn" class="btn">Başla</button>
+        </div>
+    </div>
+
+    <div class="container hidden" id="main-container">
+        <h1 id="instruction"></h1>
+        <div id="grid-container"></div>
+        <div class="controls">
+            <button id="check-btn" class="btn">Kontrol Et</button>
+            <button id="next-stage-btn" class="btn hidden">Sonraki Aşama</button>
+            <button id="restart-btn" class="btn hidden">Yeniden Başla</button>
+        </div>
+        <div class="footer">Hazırlayan: Osman AYDOĞDU</div>
+    </div>
+
+    <script>
+        const instructionEl = document.getElementById('instruction');
+        const gridContainer = document.getElementById('grid-container');
+        const checkBtn = document.getElementById('check-btn');
+        const nextStageBtn = document.getElementById('next-stage-btn');
+        const restartBtn = document.getElementById('restart-btn');
+        const startOverlay = document.getElementById('start-overlay');
+        const startBtn = document.getElementById('start-btn');
+        const mainContainer = document.getElementById('main-container');
+        
+        const GRID_COLS = 40, GRID_ROWS = 25;
+        const AREAS = {
+            12: [[1, 12], [2, 6], [3, 4]], 16: [[1, 16], [2, 8], [4, 4]],
+            18: [[1, 18], [2, 9], [3, 6]], 20: [[1, 20], [2, 10], [4, 5]],
+            24: [[1, 24], [2, 12], [3, 8], [4, 6]]
+        };
+        const AREA_KEYS = Object.keys(AREAS).map(Number);
+        
+        let targetArea, isGameActive = true;
+        let currentStage = 1, correctRectsData = [];
+
+        function getPerimeter(rect) { return 2 * (rect.dataset.dims.split(',').map(Number).reduce((a, b) => a + b, 0)); }
+        function getRandomElement(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+        function checkOverlap(r1, r2) { return (r1.x < r2.x + r2.w + 1 && r1.x + r1.w + 1 > r2.x && r1.y < r2.y + r2.h + 1 && r1.y + r1.h + 1 > r2.y); }
+        
+        function placeRectangles(rectsToPlace) {
+            const placedRects = []; gridContainer.innerHTML = ''; 
+            rectsToPlace.forEach(rectData => {
+                let p = false, a = 0;
+                while (!p && a < 150) {
+                    const pr = { w: rectData.dims[0], h: rectData.dims[1], x: Math.floor(Math.random() * (GRID_COLS - rectData.dims[0])), y: Math.floor(Math.random() * (GRID_ROWS - rectData.dims[1])) };
+                    if (!placedRects.some(pl => checkOverlap(pr, pl))) { placedRects.push(pr); createRectangleElement(pr, rectData.isCorrect, rectData.dims); p = true; } a++;
+                }
+                if (!p) console.error("Yerleştirilemedi:", rectData);
+            });
+        }
+
+        function createRectangleElement(rect, isCorrect, dims) {
+            const unitSize = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--unit-size'));
+            const div = document.createElement('div'), label = document.createElement('span');
+            div.className = 'rectangle'; label.className = 'dim-label';
+            div.style.width = `${rect.w * unitSize}px`; div.style.height = `${rect.h * unitSize}px`;
+            div.style.left = `${rect.x * unitSize}px`; div.style.top = `${rect.y * unitSize}px`;
+            div.dataset.isCorrect = isCorrect; div.dataset.dims = `${dims[0]},${dims[1]}`;
+            label.innerHTML = (rect.h > rect.w * 1.5) ? `${dims[0]}<br>x<br>${dims[1]}` : `${dims[0]} x ${dims[1]}`;
+            div.appendChild(label); div.addEventListener('click', handleRectangleClick); gridContainer.appendChild(div);
+        }
+
+        function showDimensions() { gridContainer.querySelectorAll('.dim-label').forEach(label => label.classList.add('visible')); }
+        function handleRectangleClick(event) { if (!isGameActive) return; const target = event.target; if (currentStage > 1) { gridContainer.querySelector('.rectangle.selected')?.classList.remove('selected'); } target.classList.toggle('selected'); }
+
+        function checkAnswers() {
+            if (!isGameActive) return; isGameActive = false;
+            switch (currentStage) { case 1: checkStage1(); break; case 2: checkStage2(); break; case 3: checkStage3(); break; }
+        }
+
+        function checkStage1() {
+            let anyCorrectlySelected = false, anyIncorrectlySelected = false, anyMissed = false; 
+            correctRectsData = [];
+            gridContainer.querySelectorAll('.rectangle').forEach(rect => {
+                const isCorrect = rect.dataset.isCorrect === 'true'; const isSelected = rect.classList.contains('selected');
+                if (isCorrect) correctRectsData.push(rect);
+                if (isSelected) { 
+                    if (isCorrect) { rect.classList.add('correct'); anyCorrectlySelected = true; } 
+                    else { rect.classList.add('incorrect'); anyIncorrectlySelected = true; } 
+                } else { 
+                    if (isCorrect) { rect.classList.add('missed'); anyMissed = true; } 
+                }
+            });
+
+            const isSuccess = !anyIncorrectlySelected && !anyMissed;
+            if (isSuccess) { 
+                instructionEl.textContent = "Harika! Doğru cevapların hepsi bu. Şimdi onlarla devam edelim."; 
+            } else { 
+                let msgParts = [];
+                if (anyCorrectlySelected) msgParts.push("Yeşil olanlar doğru seçimlerindi.");
+                if (anyIncorrectlySelected) msgParts.push("Kırmızı olanlar yanlış seçimlerindi.");
+                if (anyMissed) {
+                    const text = (msgParts.length > 0) ? "Sarı ile gösterilenleri ise seçmeliydin." : "Sarı ile gösterilenleri seçmeliydin.";
+                    msgParts.push(text);
+                }
+                instructionEl.textContent = "Tekrar gözden geçirelim: " + msgParts.join(" ");
+            }
+            
+            showDimensions(); checkBtn.classList.add('hidden'); nextStageBtn.classList.remove('hidden');
+        }
+
+        function checkStage2() {
+            const selected = gridContainer.querySelector('.rectangle.selected');
+            if (!selected) { isGameActive = true; return; }
+
+            const currentRects = Array.from(gridContainer.querySelectorAll('.rectangle'));
+            const perimeters = currentRects.map(getPerimeter);
+            const maxPerimeter = Math.max(...perimeters);
+            
+            if (getPerimeter(selected) === maxPerimeter) {
+                selected.classList.add('correct');
+                instructionEl.textContent = "Çok doğru! Şimdi son aşama.";
+            } else {
+                selected.classList.add('incorrect');
+                const correctRect = currentRects.find(rect => getPerimeter(rect) === maxPerimeter);
+                if (correctRect) correctRect.classList.add('correct');
+                instructionEl.textContent = "Doğru cevap yeşil ile gösterilendir. Şimdi son aşamaya geçelim.";
+            }
+            checkBtn.classList.add('hidden'); nextStageBtn.classList.remove('hidden');
+        }
+
+        function checkStage3() {
+            const selected = gridContainer.querySelector('.rectangle.selected');
+            if (!selected) { isGameActive = true; return; }
+
+            const currentRects = Array.from(gridContainer.querySelectorAll('.rectangle'));
+            const perimeters = currentRects.map(getPerimeter);
+            const minPerimeter = Math.min(...perimeters);
+
+            if (getPerimeter(selected) === minPerimeter) {
+                selected.classList.add('correct');
+                instructionEl.textContent = "Tebrikler, etkinliği başarıyla tamamladın!";
+            } else {
+                selected.classList.add('incorrect');
+                const correctRect = currentRects.find(rect => getPerimeter(rect) === minPerimeter);
+                if (correctRect) correctRect.classList.add('correct');
+                instructionEl.textContent = "Doğru cevap yeşil ile gösterilendi. Etkinliği tamamladın!";
+            }
+            checkBtn.classList.add('hidden'); restartBtn.classList.remove('hidden');
+        }
+        
+        function goToNextStage() { if (currentStage === 1) setupStage2(); else if (currentStage === 2) setupStage3(); }
+
+        function setupStage1() {
+            currentStage = 1; isGameActive = true;
+            targetArea = getRandomElement(AREA_KEYS);
+            instructionEl.textContent = `1. Aşama: Alanı ${targetArea} birimkare olan tüm dikdörtgenleri seçin.`;
+            checkBtn.classList.remove('hidden'); restartBtn.classList.add('hidden'); nextStageBtn.classList.add('hidden');
+            
+            const correct = AREAS[targetArea].map(d => ({ dims: d, isCorrect: true }));
+            const distractors = []; const otherKeys = AREA_KEYS.filter(k => k !== targetArea);
+            while (distractors.length < 7 - correct.length) {
+                const rKey = getRandomElement(otherKeys), rDims = getRandomElement(AREAS[rKey]);
+                if (!distractors.some(d => d.dims[0] === rDims[0] && d.dims[1] === rDims[1])) distractors.push({ dims: rDims, isCorrect: false });
+            }
+            const all = [...correct, ...distractors].sort(() => Math.random() - 0.5);
+            const oriented = all.map(r => (Math.random() > 0.5) ? { ...r, dims: [r.dims[1], r.dims[0]] } : r);
+            placeRectangles(oriented);
+        }
+
+        function setupStage2() {
+            currentStage = 2; isGameActive = true;
+            instructionEl.textContent = `2. Aşama: Bu dikdörtgenlerden çevresi en büyük olanı seçin.`;
+            checkBtn.classList.remove('hidden'); nextStageBtn.classList.add('hidden'); restartBtn.classList.add('hidden');
+            gridContainer.innerHTML = '';
+            const rectsToPlace = correctRectsData.map(rect => ({ dims: rect.dataset.dims.split(',').map(Number), isCorrect: true }));
+            placeRectangles(rectsToPlace);
+            showDimensions();
+        }
+
+        function setupStage3() {
+            currentStage = 3; isGameActive = true;
+            instructionEl.textContent = `3. Aşama: Şimdi de çevresi en küçük olanı seçin.`;
+            checkBtn.classList.remove('hidden'); nextStageBtn.classList.add('hidden'); restartBtn.classList.add('hidden');
+            gridContainer.querySelectorAll('.rectangle').forEach(rect => rect.classList.remove('selected', 'correct', 'incorrect'));
+        }
+        
+        function initialize() {
+            startOverlay.classList.add('hidden'); mainContainer.classList.remove('hidden');
+            setupStage1();
+        }
+
+        startBtn.addEventListener('click', initialize);
+        checkBtn.addEventListener('click', checkAnswers);
+        nextStageBtn.addEventListener('click', goToNextStage);
+        restartBtn.addEventListener('click', setupStage1);
+
+        window.addEventListener('resize', () => { clearTimeout(window.resizeTimer); window.resizeTimer = setTimeout(() => { if (!mainContainer.classList.contains('hidden')) setupStage1(); }, 250); });
+    </script>
+</body>
+</html>

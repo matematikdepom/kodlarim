@@ -1,0 +1,453 @@
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Güvenli Alan Oluşturma Oyunu</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            background: linear-gradient(135deg, #1a2a44 0%, #2c3e50 100%);
+            color: #e0e7ff;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            width: 100%;
+            max-width: 960px;
+            background: #1e293b;
+            border-radius: 16px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+            position: relative;
+        }
+        .header {
+            background: linear-gradient(90deg, #ff6b6b, #ff8e53);
+            padding: 20px;
+            text-align: center;
+        }
+        h1 {
+            color: #fff;
+            font-size: 2em;
+            margin: 0;
+            letter-spacing: 1px;
+        }
+        .main-content {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            padding: 24px;
+        }
+        .sol-panel {
+            flex: 1;
+            min-width: 300px;
+        }
+        .sag-panel {
+            flex: 2;
+            min-width: 320px;
+        }
+        .panel {
+            background: #2d3748;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 20px;
+            transition: transform 0.3s ease;
+        }
+        .panel:hover {
+            transform: translateY(-5px);
+        }
+        h2 {
+            margin-top: 0;
+            color: #60a5fa;
+            border-bottom: 2px solid #60a5fa;
+            padding-bottom: 12px;
+            font-size: 1.5em;
+        }
+        #talimatlar h2, #talimatlar p {
+            color: #a5b4fc;
+        }
+        #talimatlar h2 {
+            border-bottom-color: #a5b4fc;
+        }
+        #talimatlar p.kural {
+            font-weight: 700;
+            background: #374151;
+            padding: 8px;
+            border-radius: 6px;
+        }
+        #talimatlar p strong {
+            color: #fff;
+        }
+        #kontrol-paneli .bilgi-satiri {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            font-size: 1.1em;
+        }
+        #kontrol-paneli .deger {
+            font-weight: 700;
+            color: #34d399;
+        }
+        #gorev-durumu {
+            margin-top: 15px;
+            padding: 12px;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: 500;
+            background: #4b5563;
+            color: #fff;
+        }
+        #mesaj {
+            margin-top: 15px;
+            padding: 12px;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: 500;
+            transition: all 0.3s;
+            opacity: 0;
+        }
+        #mesaj.visible {
+            opacity: 1;
+        }
+        #mesaj.success {
+            background: #10b981;
+            color: #fff;
+        }
+        #mesaj.error {
+            background: #ef4444;
+            color: #fff;
+        }
+        #mesaj.completion {
+            background: #3b82f6;
+            color: #fff;
+            font-size: 1.1em;
+        }
+        #zemin-container {
+            position: relative;
+            width: 100%;
+            max-width: 400px;
+            margin: 0 auto;
+            aspect-ratio: 1 / 1;
+        }
+        #zemin {
+            width: 100%;
+            height: 100%;
+            background: #f8fafc;
+            border: 3px solid #6b7280;
+            border-radius: 12px;
+            background-image: linear-gradient(#d1d5db 1px, transparent 1px),
+                             linear-gradient(90deg, #d1d5db 1px, transparent 1px);
+            background-size: calc(100% / 10) calc(100% / 10);
+            box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        #civili-tahta, #cizim-alani {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+        .civi {
+            position: absolute;
+            width: 24px;
+            height: 24px;
+            transform: translate(-50%, -50%);
+            cursor: pointer;
+            border-radius: 50%;
+        }
+        .civi::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 10px;
+            height: 10px;
+            background: #6b7280;
+            border-radius: 50%;
+            transition: all 0.2s;
+        }
+        .civi:hover::before {
+            background: #9ca3af;
+            box-shadow: 0 0 8px rgba(255, 255, 255, 0.5);
+        }
+        .civi.secili::before {
+            background: #34d399;
+            width: 14px;
+            height: 14px;
+            border: 2px solid #fff;
+        }
+        #cizim-alani {
+            pointer-events: none;
+        }
+        .cizilen-dikdortgen {
+            position: absolute;
+            background: rgba(52, 211, 153, 0.3);
+            border: 3px solid #10b981;
+            box-sizing: border-box;
+            border-radius: 4px;
+        }
+        #sonuclar-tablosu {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 12px;
+        }
+        #sonuclar-tablosu th, #sonuclar-tablosu td {
+            padding: 10px;
+            text-align: center;
+            border-bottom: 1px solid #6b7280;
+        }
+        #sonuclar-tablosu th {
+            background: #60a5fa;
+            color: #fff;
+        }
+        #reset-btn, #yeni-gorev-btn {
+            width: 100%;
+            padding: 12px;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1em;
+            cursor: pointer;
+            margin-top: 12px;
+            transition: background 0.3s ease;
+        }
+        #reset-btn {
+            background: #ef4444;
+        }
+        #reset-btn:hover {
+            background: #dc2626;
+        }
+        #yeni-gorev-btn {
+            background: #3b82f6;
+        }
+        #yeni-gorev-btn:hover {
+            background: #2563eb;
+        }
+        .footer {
+            text-align: center;
+            padding: 16px;
+            background: #111827;
+            color: #9ca3af;
+            font-size: 0.9em;
+            border-top: 1px solid #374151;
+        }
+        @media (max-width: 768px) {
+            .main-content {
+                flex-direction: column;
+            }
+            h1 {
+                font-size: 1.6em;
+            }
+            .sol-panel, .sag-panel {
+                min-width: 100%;
+            }
+        }
+    </style>
+    <script src="scorm_api.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>Güvenli Alan Oluşturma Oyunu</h1>
+        </header>
+        <main class="main-content">
+            <div class="sol-panel">
+                <div class="panel" id="talimatlar">
+                    <h2>Görev Planı</h2>
+                    <p><strong>1. Şerit Uzunluğu:</strong> Elinde toplam <strong id="hedef-cevre-gosterge">22 birim</strong> uzunluğunda bir güvenlik şeridi var.</p>
+                    <p><strong>2. Köşe Seçimi:</strong> Birim kareli zeminde tıklayarak dikdörtgenin <strong>4 köşesini</strong> de belirle.</p>
+                    <p class="kural">Kural: Güvenli alan oluştururken, güvenlik şeridinin tamamını kullanmalısın, ne eksik ne de fazla!</p>
+                    <button id="yeni-gorev-btn">Yeni Görev Al</button>
+                </div>
+                <div class="panel" id="kontrol-paneli">
+                    <h2>Durum Raporu</h2>
+                    <div id="gorev-durumu">1. köşeyi seçin.</div>
+                    <div class="bilgi-satiri"><span>Seçilen Kenarlar:</span><span class="deger" id="kenarlar">-</span></div>
+                    <div class="bilgi-satiri"><span>Hesaplanan Çevre:</span><span class="deger" id="hesaplanan-cevre">-</span></div>
+                    <div class="bilgi-satiri"><span>Güvenli Alan:</span><span class="deger" id="hesaplanan-alan">-</span></div>
+                    <div id="mesaj" class=""></div>
+                </div>
+            </div>
+            <div class="sag-panel">
+                <div id="zemin-container">
+                    <div id="zemin"></div>
+                    <div id="civili-tahta">
+                        <!-- Çiviler dinamik olarak JavaScript ile oluşturulacak -->
+                    </div>
+                    <div id="cizim-alani"></div>
+                </div>
+                <div class="panel" id="sonuclar">
+                    <h2>Başarılı Görevler</h2>
+                    <table id="sonuclar-tablosu">
+                        <thead><tr><th>Kısa Kenar</th><th>Uzun Kenar</th><th>Alan</th></tr></thead>
+                        <tbody></tbody>
+                    </table>
+                    <button id="reset-btn">Seçimi Sıfırla</button>
+                </div>
+            </div>
+        </main>
+        <div class="footer">Hazırlayan: Osman AYDOĞDU</div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const olasiCevreler = [16, 18, 20, 22];
+            let hedefCevre;
+            let tumOlasiliklar = new Set();
+
+            const tahta = document.getElementById('civili-tahta');
+            const cizimAlani = document.getElementById('cizim-alani');
+            const gorevDurumu = document.getElementById('gorev-durumu');
+            const mesajKutusu = document.getElementById('mesaj');
+            const kenarlarEl = document.getElementById('kenarlar');
+            const cevreEl = document.getElementById('hesaplanan-cevre');
+            const alanEl = document.getElementById('hesaplanan-alan');
+            const sonuclarTablosu = document.querySelector('#sonuclar-tablosu tbody');
+            const resetBtn = document.getElementById('reset-btn');
+            const yeniGorevBtn = document.getElementById('yeni-gorev-btn');
+            const hedefCevreGosterge = document.getElementById('hedef-cevre-gosterge');
+
+            let secilenNoktalar = [];
+            let bulunanlar = new Set();
+
+            function initTahta() {
+                tahta.innerHTML = '';
+                for (let y = 0; y <= 10; y++) {
+                    for (let x = 0; x <= 10; x++) {
+                        const civi = document.createElement('div');
+                        civi.classList.add('civi');
+                        civi.dataset.x = x;
+                        civi.dataset.y = y;
+                        civi.style.left = `${(x / 10) * 100}%`;
+                        civi.style.top = `${(y / 10) * 100}%`;
+                        civi.addEventListener('click', civiTiklandi);
+                        tahta.appendChild(civi);
+                    }
+                }
+            }
+
+            function yeniOyunBaslat() {
+                hedefCevre = olasiCevreler[Math.floor(Math.random() * olasiCevreler.length)];
+                hedefCevreGosterge.textContent = `${hedefCevre} birim`;
+                
+                tumOlasiliklar.clear();
+                const yariCevre = hedefCevre / 2;
+                for (let i = 1; i <= Math.floor(yariCevre / 2); i++) {
+                    const j = yariCevre - i;
+                    tumOlasiliklar.add(`${i}-${j}`);
+                }
+
+                sonuclarTablosu.innerHTML = '';
+                bulunanlar.clear();
+                tahtayiTemizle();
+            }
+
+            function civiTiklandi(event) {
+                const civi = event.currentTarget;
+                if (civi.classList.contains('secili') || secilenNoktalar.length >= 4) return;
+                civi.classList.add('secili');
+                secilenNoktalar.push({ x: parseInt(civi.dataset.x), y: parseInt(civi.dataset.y) });
+                gorevDurumu.textContent = `${secilenNoktalar.length + 1}. köşeyi seçin.`;
+                if (secilenNoktalar.length === 4) {
+                    gorevDurumu.textContent = `4 köşe seçildi. Sonuçlar hesaplanıyor...`;
+                    setTimeout(dikdortgeniDogrulaVeCiz, 200);
+                }
+            }
+
+            function dikdortgeniDogrulaVeCiz() {
+                const xler = secilenNoktalar.map(p => p.x);
+                const yler = secilenNoktalar.map(p => p.y);
+                const uniqueX = [...new Set(xler)];
+                const uniqueY = [...new Set(yler)];
+
+                if (uniqueX.length !== 2 || uniqueY.length !== 2) {
+                    mesajGoster('error', 'Bu bir dikdörtgen değil!');
+                    setTimeout(tahtayiTemizle, 1500);
+                    return;
+                }
+
+                const minX = Math.min(...uniqueX);
+                const minY = Math.min(...uniqueY);
+                const width = Math.max(...uniqueX) - minX;
+                const height = Math.max(...uniqueY) - minY;
+                
+                if (width === 0 || height === 0) {
+                    mesajGoster('error', 'Bu bir çizgi, bir alan değil!');
+                    setTimeout(tahtayiTemizle, 1500);
+                    return;
+                }
+
+                const cevre = 2 * (width + height);
+                const alan = width * height;
+
+                kenarlarEl.textContent = `${width} x ${height}`;
+                cevreEl.textContent = `${cevre} birim`;
+                alanEl.textContent = `${alan} br²`;
+
+                if (cevre === hedefCevre) {
+                    mesajGoster('success', 'Tebrikler! Doğru bir alan oluşturdun.');
+                    sonucaEkle(width, height, alan);
+                    alanCiz(minX, minY, width, height);
+                } else {
+                    mesajGoster('error', `Hedef ${hedefCevre} birimdi, ama senin çevren ${cevre} birim oldu.`);
+                }
+            }
+            
+            function alanCiz(minX, minY, width, height) {
+                const rect = document.createElement('div');
+                rect.className = 'cizilen-dikdortgen';
+                rect.style.left = `${(minX / 10) * 100}%`;
+                rect.style.top = `${(minY / 10) * 100}%`;
+                rect.style.width = `${(width / 10) * 100}%`;
+                rect.style.height = `${(height / 10) * 100}%`;
+                cizimAlani.appendChild(rect);
+            }
+
+            function sonucaEkle(w, h, alan) {
+                const kisa = Math.min(w, h);
+                const uzun = Math.max(w, h);
+                const key = `${kisa}-${uzun}`;
+                if (bulunanlar.has(key)) return;
+                bulunanlar.add(key);
+                const row = sonuclarTablosu.insertRow();
+                row.innerHTML = `<td>${kisa} birim</td><td>${uzun} birim</td><td>${alan} br²</td>`;
+
+                if (bulunanlar.size === tumOlasiliklar.size) {
+                    setTimeout(() => mesajGoster('completion', '✨ TEBRİKLER! Bu görevdeki tüm güvenli alanları oluşturdun! ✨'), 500);
+                }
+            }
+
+            function tahtayiTemizle() {
+                document.querySelectorAll('.civi').forEach(c => c.classList.remove('secili'));
+                cizimAlani.innerHTML = '';
+                secilenNoktalar = [];
+                gorevDurumu.textContent = '1. köşeyi seçin.';
+                mesajKutusu.textContent = '';
+                mesajKutusu.className = '';
+                kenarlarEl.textContent = '-';
+                cevreEl.textContent = '-';
+                alanEl.textContent = '-';
+            }
+            
+            function mesajGoster(tip, metin) {
+                mesajKutusu.className = `visible ${tip}`;
+                mesajKutusu.textContent = metin;
+            }
+
+            resetBtn.addEventListener('click', tahtayiTemizle);
+            yeniGorevBtn.addEventListener('click', yeniOyunBaslat);
+
+            initTahta();
+            yeniOyunBaslat();
+        });
+    </script>
+</body>
+</html>

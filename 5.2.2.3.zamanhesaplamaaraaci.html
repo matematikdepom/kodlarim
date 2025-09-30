@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zaman Hesaplama Etkinliği</title>
+    
+    <!-- Google Fonts'tan Türkçe karakter destekli "Inter" yazı tipi -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        /* Genel Sayfa Stilleri */
+        body {
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-image: url('https://images.pexels.com/photos/844297/pexels-photo-844297.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            color: #1e293b;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        /* Ana İçerik Kutusu */
+        .container {
+            background-color: rgba(255, 255, 255, 0.95);
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+            width: 100%;
+            max-width: 550px;
+            box-sizing: border-box;
+            position: relative;
+        }
+
+        h1 {
+            text-align: center;
+            color: #1e40af;
+            font-size: 2.2em;
+            margin-bottom: 20px;
+        }
+
+        /* Hesaplama Bölümleri */
+        .calculator {
+            margin-bottom: 25px;
+            padding: 20px;
+            border-radius: 12px;
+            background-color: #f8fafc;
+            border: 1px solid #e2e8f0;
+            transition: transform 0.2s ease-in-out;
+        }
+
+        .calculator:hover {
+            transform: translateY(-5px);
+        }
+
+        h2 {
+            margin-top: 0;
+            color: #1e293b;
+            font-size: 1.5em;
+            border-bottom: 2px solid #3b82f6;
+            padding-bottom: 8px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: 600;
+            color: #475569;
+        }
+
+        /* Tarih Giriş Alanları */
+        input[type="date"] {
+            width: 100%;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid #d1d5db;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+            font-size: 1em;
+            background-color: #fff;
+            transition: border-color 0.3s;
+        }
+
+        input[type="date"]:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        /* Buton Stili */
+        button {
+            display: block;
+            width: 100%;
+            padding: 12px;
+            margin-top: 15px;
+            background-color: #3b82f6;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.2s;
+        }
+
+        button:hover {
+            background-color: #2563eb;
+            transform: translateY(-2px);
+        }
+
+        /* Sonuçların Gösterildiği Alan */
+        .result {
+            margin-top: 15px;
+            padding: 15px;
+            background-color: #e0f2fe;
+            border-radius: 8px;
+            text-align: center;
+            font-size: 1.1em;
+            font-weight: 600;
+            color: #1e40af;
+            min-height: 25px;
+        }
+
+        /* Etkinliği Bitir Butonu */
+        .finish-btn {
+            background-color: #6b7280;
+        }
+
+        .finish-btn:hover {
+            background-color: #4b5563;
+            transform: translateY(-2px);
+        }
+
+        /* Hazırlayan Bilgisi */
+        .author {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 0.9em;
+            color: #64748b;
+            font-style: italic;
+        }
+
+        /* Medya Sorguları (Responsive Tasarım) */
+        @media (max-width: 768px) {
+            body {
+                padding: 15px;
+            }
+            .container {
+                padding: 20px;
+            }
+            h1 {
+                font-size: 1.8em;
+            }
+            h2 {
+                font-size: 1.3em;
+            }
+        }
+
+        @media (max-width: 480px) {
+            body {
+                padding: 10px;
+                align-items: flex-start;
+            }
+            .container {
+                padding: 15px;
+            }
+            h1 {
+                font-size: 1.6em;
+            }
+            h2 {
+                font-size: 1.2em;
+            }
+            button {
+                font-size: 14px;
+            }
+        }
+    </style>
+    <script src="scorm_api.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h1>Zaman Hesaplama Etkinliği</h1>
+
+        <!-- Yaş Hesaplama Bölümü -->
+        <div class="calculator">
+            <h2>Yaşını Hesapla</h2>
+            <label for="dogumTarihi">Doğum Tarihin:</label>
+            <input type="date" id="dogumTarihi">
+            <button onclick="hesaplaYas()">Hesapla!</button>
+            <div class="result" id="yasSonuc"></div>
+        </div>
+
+        <!-- Tarih Farkı Hesaplama Bölümü -->
+        <div class="calculator">
+            <h2>İki Tarih Arasındaki Farkı Bul</h2>
+            <label for="baslangicTarihi">Başlangıç Tarihi:</label>
+            <input type="date" id="baslangicTarihi">
+            <label for="bitisTarihi">Bitiş Tarihi:</label>
+            <input type="date" id="bitisTarihi">
+            <button onclick="hesaplaFark()">Farkı Hesapla!</button>
+            <div class="result" id="farkSonuc"></div>
+        </div>
+
+        <!-- Navigation Bölümü -->
+        <div class="navigation">
+            <button class="finish-btn" onclick="goBack()">Etkinliği Bitir</button>
+        </div>
+
+        <!-- Hazırlayan Bilgisi -->
+        <div class="author">Hazırlayan: Osman AYDOĞDU</div>
+    </div>
+
+    <script>
+        function tarihFarkiniHesapla(tarih1, tarih2) {
+            let baslangic = new Date(tarih1);
+            let bitis = new Date(tarih2);
+
+            if (isNaN(baslangic) || isNaN(bitis)) {
+                return "Lütfen geçerli tarihler seçin!";
+            }
+            
+            if (baslangic > bitis) {
+                [baslangic, bitis] = [bitis, baslangic];
+            }
+
+            let bitisYil = bitis.getFullYear();
+            let bitisAy = bitis.getMonth();
+            let bitisGun = bitis.getDate();
+
+            let baslangicYil = baslangic.getFullYear();
+            let baslangicAy = baslangic.getMonth();
+            let baslangicGun = baslangic.getDate();
+
+            let yilFarki = bitisYil - baslangicYil;
+            let ayFarki = bitisAy - baslangicAy;
+            let gunFarki = bitisGun - baslangicGun;
+            
+            if (gunFarki < 0) {
+                ayFarki--;
+                let oncekiAyGunSayisi = new Date(bitis.getFullYear(), bitis.getMonth(), 0).getDate();
+                gunFarki += oncekiAyGunSayisi;
+            }
+
+            if (ayFarki < 0) {
+                yilFarki--;
+                ayFarki += 12;
+            }
+            
+            return `Aradaki süre: ${yilFarki} yıl, ${ayFarki} ay, ${gunFarki} gün`;
+        }
+
+        function hesaplaYas() {
+            const dogumTarihi = document.getElementById('dogumTarihi').value;
+            const sonucAlani = document.getElementById('yasSonuc');
+
+            if (!dogumTarihi) {
+                sonucAlani.textContent = "Lütfen doğum tarihini seç!";
+                return;
+            }
+            
+            const bugun = new Date();
+            if (new Date(dogumTarihi) > bugun) {
+                sonucAlani.textContent = "Gelecekteki bir tarih seçilemez!";
+                return;
+            }
+            sonucAlani.textContent = tarihFarkiniHesapla(dogumTarihi, bugun);
+        }
+
+        function hesaplaFark() {
+            const baslangicTarihi = document.getElementById('baslangicTarihi').value;
+            const bitisTarihi = document.getElementById('bitisTarihi').value;
+            const sonucAlani = document.getElementById('farkSonuc');
+
+            if (!baslangicTarihi || !bitisTarihi) {
+                sonucAlani.textContent = "Lütfen her iki tarihi de seç!";
+                return;
+            }
+
+            sonucAlani.textContent = tarihFarkiniHesapla(baslangicTarihi, bitisTarihi);
+        }
+
+        function goBack() {
+            window.history.back();
+        }
+    </script>
+</body>
+</html>

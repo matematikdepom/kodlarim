@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tatile Çıkıyorum, Sayımı Oluşturuyorum!</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #10b981; /* Zümrüt Yeşili */
+            --secondary-color: #1e3a8a; /* Derin Mavi */
+            --accent-color: #f59e0b; /* Canlı Sarı */
+            --action-color: #ef4444; /* Modern Kırmızı */
+            --light-bg: #f8fafc; /* Açık Gri-Beyaz */
+            --success-color: #22c55e; /* Yeşil */
+            --danger-color: #dc2626; /* Kırmızı */
+            --shadow-color: rgba(0, 0, 0, 0.1);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%);
+            color: var(--secondary-color);
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .container {
+            max-width: 1000px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 40px var(--shadow-color);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: url('https://www.transparenttextures.com/patterns/light-wool.png');
+            opacity: 0.05;
+            pointer-events: none;
+        }
+
+        .author {
+            text-align: center;
+            font-size: 0.9em;
+            color: #64748b;
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            font-weight: 800;
+            font-size: 2.2em;
+            color: var(--secondary-color);
+            text-align: center;
+            margin-bottom: 15px;
+            position: relative;
+        }
+
+        h1::after {
+            content: '';
+            display: block;
+            width: 100px;
+            height: 4px;
+            background: var(--primary-color);
+            margin: 10px auto;
+            border-radius: 2px;
+        }
+
+        .instructions {
+            text-align: center;
+            font-size: 1.1em;
+            color: #475569;
+            line-height: 1.6;
+            max-width: 700px;
+            margin: 0 auto 30px;
+        }
+
+        .main-panel {
+            display: flex;
+            gap: 40px;
+            flex-wrap: wrap;
+        }
+
+        .selection-panel, .result-panel {
+            flex: 1;
+            min-width: 300px;
+        }
+
+        .panel-title {
+            font-weight: 600;
+            font-size: 1.4em;
+            color: var(--secondary-color);
+            margin-bottom: 20px;
+            padding-left: 15px;
+            border-left: 6px solid var(--primary-color);
+        }
+
+        .city-selection-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 15px;
+        }
+
+        .city-btn {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 15px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px var(--shadow-color);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .city-btn:hover {
+            background: #059669;
+            transform: translateY(-3px);
+        }
+
+        .city-btn:disabled {
+            background: #d1d5db;
+            color: #9ca3af;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .vacation-route-panel {
+            background: var(--light-bg);
+            padding: 20px;
+            border-radius: 15px;
+            margin-top: 20px;
+            box-shadow: 0 2px 10px var(--shadow-color);
+        }
+
+        #route-list {
+            list-style-type: decimal;
+            padding-left: 25px;
+            font-size: 1.1em;
+            font-weight: 600;
+        }
+
+        #route-list li {
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        #route-list .plate-code {
+            background: var(--accent-color);
+            color: var(--secondary-color);
+            padding: 4px 12px;
+            border-radius: 6px;
+            font-size: 0.9em;
+        }
+
+        #final-number-container {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        #final-number-display {
+            background: var(--secondary-color);
+            color: white;
+            padding: 15px;
+            border-radius: 12px;
+            font-size: 2.2em;
+            font-weight: 800;
+            letter-spacing: 3px;
+            min-height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 12px var(--shadow-color);
+        }
+
+        #options-list {
+            list-style-type: none;
+            padding: 0;
+            margin-top: 20px;
+        }
+
+        #options-list li {
+            background: white;
+            padding: 15px 20px;
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            margin-bottom: 12px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        #options-list.disabled li {
+            pointer-events: none;
+        }
+
+        #options-list li:hover {
+            background: #f1f5f9;
+            border-color: var(--primary-color);
+            transform: translateX(5px);
+        }
+
+        #options-list li.correct {
+            background: #d1fae5;
+            border-color: var(--success-color);
+            color: var(--success-color);
+        }
+
+        #options-list li.incorrect {
+            background: #fee2e2;
+            border-color: var(--danger-color);
+            color: var(--danger-color);
+        }
+
+        .controls {
+            text-align: center;
+            margin-top: 30px;
+        }
+
+        .btn-new {
+            background: var(--action-color);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 12px;
+            font-size: 1.2em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px var(--shadow-color);
+        }
+
+        .btn-new:hover {
+            background: #dc2626;
+            transform: translateY(-3px);
+        }
+
+        @media (max-width: 768px) {
+            .main-panel {
+                flex-direction: column;
+            }
+
+            h1 {
+                font-size: 1.8em;
+            }
+
+            .city-selection-grid {
+                grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            }
+        }
+
+        @media (max-width: 480px) {
+            body {
+                padding: 10px;
+            }
+
+            .container {
+                padding: 15px;
+            }
+
+            #final-number-display {
+                font-size: 1.6em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="author">Hazırlayan: Osman AYDOĞDU</div>
+        <h1>🏝️ Tatile Çıkıyorum, Sayımı Oluşturuyorum!</h1>
+        <p class="instructions">
+            Haydi, tatile çıkacağın 4 şehri seçerek plaka kodlarından oluşan sayının okunuşunu bulalım! Bakalım bu sayıyı doğru okuyabilecek misin?
+        </p>
+        <div class="main-panel">
+            <div class="selection-panel">
+                <h2 class="panel-title">1. Tatil İçin 4 Şehir Seç!</h2>
+                <div class="city-selection-grid" id="city-grid"></div>
+                <div class="vacation-route-panel">
+                    <h2 class="panel-title">Tatil Rotan ve Oluşan Sayı</h2>
+                    <ol id="route-list"></ol>
+                    <div id="final-number-container">
+                        <div id="final-number-display"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="result-panel">
+                <h2 class="panel-title">2. Sayının Okunuşunu Bul!</h2>
+                <ul id="options-list"></ul>
+            </div>
+        </div>
+        <div class="controls">
+            <button id="reset-btn" class="btn-new">Yeni Tatil Planla</button>
+        </div>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const plateCodes = {
+                'Adana': '01', 'Ankara': '06', 'Antalya': '07', 'Bursa': '16',
+                'Erzurum': '25', 'Gaziantep': '27', 'İstanbul': '34', 'İzmir': '35',
+                'Samsun': '55', 'Trabzon': '61', 'Diyarbakır': '21', 'Konya': '42'
+            };
+            const cityGrid = document.getElementById('city-grid');
+            const routeList = document.getElementById('route-list');
+            const finalNumberDisplay = document.getElementById('final-number-display');
+            const optionsList = document.getElementById('options-list');
+            const resetBtn = document.getElementById('reset-btn');
+            let selectedRoute = [];
+            const birler = ["", "bir", "iki", "üç", "dört", "beş", "altı", "yedi", "sekiz", "dokuz"];
+            const onlar = ["", "on", "yirmi", "otuz", "kırk", "elli", "altmış", "yetmiş", "seksen", "doksan"];
+            const basamak = ["", "bin", "milyon"];
+
+            function sayiOku(sayiStr) {
+                if (parseInt(sayiStr, 10) === 0) return "sıfır";
+                let parts = [];
+                let tempStr = sayiStr;
+                if (tempStr.length === 8) {
+                    parts.push(tempStr.slice(0, 2));
+                    parts.push(tempStr.slice(2, 5));
+                    parts.push(tempStr.slice(5, 8));
+                } else {
+                    parts.push(tempStr.slice(0, tempStr.length % 3 || 3));
+                    tempStr = tempStr.slice(parts[0].length);
+                    while (tempStr.length > 0) {
+                        parts.push(tempStr.slice(0, 3));
+                        tempStr = tempStr.slice(3);
+                    }
+                }
+                return parts.map((part, index) => {
+                    if (parseInt(part, 10) === 0) return "";
+                    let p = part.padStart(3, '0');
+                    if (index === 0 && part.length < 3) p = part;
+                    let okunus = '';
+                    if (p.length === 3) {
+                        let yuz = birler[p[0]];
+                        let on = onlar[p[1]];
+                        let bir = birler[p[2]];
+                        okunus = `${yuz ? (yuz === "bir" ? "yüz" : yuz + " yüz") : ""} ${on} ${bir}`.trim();
+                    } else if (p.length === 2) {
+                        let on = onlar[p[0]];
+                        let bir = birler[p[1]];
+                        okunus = `${on} ${bir}`.trim();
+                    } else {
+                        okunus = birler[p[0]];
+                    }
+                    let basamakAdi = basamak[parts.length - 1 - index];
+                    if (parseInt(part, 10) === 1 && basamakAdi === "bin") return "bin";
+                    if (okunus === "") return "";
+                    return `${okunus} ${basamakAdi}`;
+                }).join(" ").replace(/\s+/g, ' ').trim();
+            }
+
+            function generateDecoys(correctReading) {
+                const decoys = new Set();
+                while (decoys.size < 3) {
+                    let newWords = correctReading.split(' ');
+                    let changeType = Math.random();
+                    if (changeType > 0.5 && newWords.includes('milyon')) {
+                        const index = newWords.indexOf('milyon');
+                        if (newWords.includes('bin')) {
+                            const binIndex = newWords.indexOf('bin');
+                            [newWords[index], newWords[binIndex]] = [newWords[binIndex], newWords[index]];
+                        } else {
+                            newWords[index] = 'bin';
+                        }
+                    } else {
+                        const rIndex = Math.floor(Math.random() * newWords.length);
+                        if (birler.includes(newWords[rIndex]) && newWords[rIndex]) {
+                            let oldWord = newWords[rIndex];
+                            let newWord = oldWord;
+                            while (newWord === oldWord) {
+                                newWord = birler[Math.floor(Math.random() * 9) + 1];
+                            }
+                            newWords[rIndex] = newWord;
+                        }
+                    }
+                    if (newWords.join(' ') !== correctReading) decoys.add(newWords.join(' '));
+                }
+                return Array.from(decoys);
+            }
+
+            function initActivity() {
+                selectedRoute = [];
+                cityGrid.innerHTML = '';
+                Object.keys(plateCodes).sort(() => 0.5 - Math.random()).forEach(city => {
+                    const btn = document.createElement('button');
+                    btn.className = 'city-btn';
+                    btn.textContent = city;
+                    btn.dataset.city = city;
+                    cityGrid.appendChild(btn);
+                });
+                updateUI();
+            }
+
+            function handleCityClick(e) {
+                const city = e.target.dataset.city;
+                if (!city || selectedRoute.length >= 4 || e.target.disabled) return;
+                selectedRoute.push(city);
+                e.target.disabled = true;
+                updateUI();
+            }
+
+            function updateUI() {
+                routeList.innerHTML = selectedRoute.map(city => `<li>${city} <span class="plate-code">${plateCodes[city]}</span></li>`).join('');
+                let numberStr = selectedRoute.map(city => plateCodes[city]).join('');
+                if (numberStr.length > 0) {
+                    finalNumberDisplay.textContent = parseInt(numberStr, 10).toLocaleString('tr-TR').replace(/\./g, ' ');
+                } else {
+                    finalNumberDisplay.textContent = '';
+                }
+                optionsList.innerHTML = '';
+                optionsList.classList.remove('disabled');
+                if (selectedRoute.length === 4) {
+                    document.querySelectorAll('.city-btn').forEach(btn => btn.disabled = true);
+                    const correctAnswerText = sayiOku(numberStr);
+                    const decoys = generateDecoys(correctAnswerText);
+                    const options = [...decoys, correctAnswerText].sort(() => Math.random() - 0.5);
+                    options.forEach(option => {
+                        const li = document.createElement('li');
+                        li.textContent = option;
+                        li.dataset.answer = option;
+                        optionsList.appendChild(li);
+                        li.addEventListener('click', handleOptionClick);
+                    });
+                }
+            }
+
+            function handleOptionClick(e) {
+                if (optionsList.classList.contains('disabled')) return;
+                optionsList.classList.add('disabled');
+                let numberStr = selectedRoute.map(city => plateCodes[city]).join('');
+                const correctAnswerText = sayiOku(numberStr);
+                if (e.target.dataset.answer === correctAnswerText) {
+                    e.target.classList.add('correct');
+                } else {
+                    e.target.classList.add('incorrect');
+                    const correctLi = optionsList.querySelector(`li[data-answer="${CSS.escape(correctAnswerText)}"]`);
+                    if (correctLi) {
+                        correctLi.classList.add('correct');
+                    }
+                }
+            }
+
+            cityGrid.addEventListener('click', handleCityClick);
+            resetBtn.addEventListener('click', initActivity);
+            initActivity();
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zihinden Toplama ve Çıkarma Etkinliği</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Genel Stiller */
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url('https://images.unsplash.com/photo-1506748686214-e9df14d4d9d0?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80') no-repeat center center fixed;
+            background-size: cover;
+            color: #e5e7eb; /* Açık gri-beyaz yazı rengi, yüksek kontrast */
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            box-sizing: border-box;
+            overflow: auto;
+        }
+
+        .container {
+            display: grid;
+            grid-template-areas:
+                "header header"
+                "main aside";
+            grid-template-columns: 3fr 1fr;
+            grid-template-rows: auto 1fr;
+            gap: 20px;
+            width: 100%;
+            max-width: 1400px;
+            padding: 20px;
+            position: relative;
+        }
+
+        .header {
+            grid-area: header;
+            background: #1e40af; /* Koyu mavi başlık arka planı */
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+        }
+
+        .main {
+            grid-area: main;
+            background: #ffffff; /* Beyaz arka plan, yüksek kontrast */
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+        }
+
+        .aside {
+            grid-area: aside;
+            background: #f3f4f6; /* Açık gri arka plan */
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+        }
+
+        h1, h2 {
+            color: #e5e7eb; /* Açık gri-beyaz başlık rengi */
+            font-weight: 700;
+            margin: 0 0 20px;
+        }
+
+        .main h2, .aside h2 { 
+            color: #1e3a8a; /* Koyu mavi, açık arka planla kontrast */
+        }
+
+        /* Etkinlik Kuralları Yazı Rengi */
+        .aside ul {
+            color: #3b82f6; /* Mavi yazı rengi, etkinlik kuralları için */
+        }
+
+        /* Etkinlik Alanı */
+        #game-screen {
+            font-size: 3em;
+            font-weight: 700;
+            margin: 30px 0;
+            padding: 20px;
+            background: linear-gradient(45deg, #dbeafe, #bfdbfe); /* Açık mavi gradyan */
+            border-radius: 10px;
+            text-align: center;
+            color: #111827; /* Koyu gri, açık arka planla yüksek kontrast */
+        }
+
+        #score, #timer { 
+            font-size: 1.5em; 
+            margin: 10px 0; 
+            color: #111827; /* Koyu gri, yüksek kontrast */
+        }
+        #score-value { 
+            color: #16a34a; /* Yeşil, okunabilir */
+            font-weight: 600; 
+        }
+        #timer-value { 
+            color: #dc2626; /* Kırmızı, okunabilir */
+            font-weight: 600; 
+        }
+        #answer-input {
+            width: 100%;
+            padding: 15px;
+            font-size: 2em;
+            text-align: center;
+            border: 2px solid #93c5fd;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            background-color: #f9fafb; /* Açık gri-beyaz arka plan */
+            color: #111827; /* Koyu gri, yüksek kontrast */
+        }
+
+        .game-buttons button {
+            padding: 12px 25px;
+            font-size: 1.2em;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: #ffffff; /* Beyaz yazı rengi, tüm butonlarda yüksek kontrast */
+            margin: 5px;
+        }
+        #start-button { 
+            background-color: #16a34a; /* Yeşil */
+        }
+        #start-button:hover { 
+            background-color: #15803d; 
+            transform: scale(1.05); 
+        }
+        #finish-button { 
+            background-color: #dc2626; /* Kırmızı */
+            display: none; 
+        }
+        #finish-button:hover { 
+            background-color: #b91c1c; 
+            transform: scale(1.05); 
+        }
+        #fullscreen-button { 
+            background-color: #6d28d9; /* Mor */
+        }
+        #fullscreen-button:hover { 
+            background-color: #5b21b6; 
+            transform: scale(1.05); 
+        }
+
+        /* Numpad */
+        .numpad {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+        }
+        .numpad button {
+            padding: 15px;
+            font-size: 1.5em;
+            border: none;
+            border-radius: 8px;
+            background-color: #e5e7eb; /* Açık gri arka plan */
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: #111827; /* Koyu gri, yüksek kontrast */
+        }
+        .numpad button:hover { 
+            background-color: #d1d5db; 
+            transform: translateY(-2px); 
+        }
+        .numpad button:disabled { 
+            background-color: #e5e7eb; 
+            opacity: 0.5; 
+            cursor: not-allowed; 
+        }
+        .numpad .numpad-control { 
+            background-color: #f59e0b; /* Sarı */
+            color: #ffffff; /* Beyaz, yüksek kontrast */
+        }
+        .numpad .numpad-control:hover { 
+            background-color: #d97706; 
+        }
+        .numpad .numpad-submit { 
+            background-color: #3b82f6; /* Mavi */
+            color: #ffffff; /* Beyaz, yüksek kontrast */
+        }
+        .numpad .numpad-submit:hover { 
+            background-color: #1e40af; 
+        }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.75);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .modal-content {
+            background: #ffffff; /* Beyaz arka plan */
+            padding: 30px;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+            animation: slideIn 0.4s ease;
+            max-width: 90%;
+        }
+        @keyframes slideIn { 
+            from { opacity: 0; transform: translateY(-20px); } 
+            to { opacity: 1; transform: translateY(0); } 
+        }
+        .modal-content h3 { 
+            margin: 0 0 15px; 
+            font-size: 1.8em; 
+            color: #111827; /* Koyu gri, yüksek kontrast */
+        }
+        .modal-content p { 
+            font-size: 1.2em; 
+            margin: 10px 0; 
+            color: #374151; /* Orta gri, okunabilir */
+        }
+        .modal-content button {
+            padding: 10px 20px;
+            font-size: 1.1em;
+            border-radius: 8px;
+            border: none;
+            background-color: #3b82f6; /* Mavi */
+            color: #ffffff; /* Beyaz, yüksek kontrast */
+            cursor: pointer;
+        }
+        .modal-content button:hover { 
+            background-color: #1e40af; 
+        }
+        .modal-content.correct h3 { 
+            color: #16a34a; /* Yeşil */
+        }
+        .modal-content.incorrect h3 { 
+            color: #dc2626; /* Kırmızı */
+        }
+
+        /* Tam Ekran Modu */
+        .fullscreen .container {
+            max-width: 100%;
+            height: 100vh;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        .fullscreen .header, .fullscreen .aside { 
+            display: none; 
+        }
+        .fullscreen .main {
+            width: 100%;
+            max-width: 800px;
+            padding: 20px;
+        }
+        .fullscreen #game-screen { 
+            font-size: 4em; 
+        }
+        .fullscreen #answer-input { 
+            font-size: 2.5em; 
+        }
+        .fullscreen .game-buttons button { 
+            font-size: 1.5em; 
+            padding: 15px 30px; 
+        }
+        .fullscreen .footer {
+            display: none; /* Tam ekran modunda footer gizlenir */
+        }
+
+        /* Hazırlayan Bilgisi */
+        .footer {
+            position: fixed;
+            bottom: 20px;
+            left: 20px; /* Sol alt köşeye taşındı */
+            font-size: 1em;
+            color: #ffffff; /* Beyaz, yüksek kontrast */
+            background: rgba(0, 0, 0, 0.6); /* Arka planla kontrast için hafif opak siyah */
+            padding: 8px 12px;
+            border-radius: 6px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+            z-index: 10;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container {
+                grid-template-areas:
+                    "header"
+                    "main"
+                    "aside";
+                grid-template-columns: 1fr;
+            }
+            .footer { 
+                position: fixed; /* Mobil cihazlarda da sabit */
+                bottom: 10px;
+                left: 10px;
+                text-align: left;
+                font-size: 0.9em;
+            }
+        }
+    </style>
+    <script src="scorm_api.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Zihinden Matematik Etkinliği</h1>
+        </div>
+
+        <div class="main">
+            <div id="game-area" style="display:none;">
+                <div id="score">Puan: <span id="score-value">0</span></div>
+                <div id="timer">Kalan Süre: <span id="timer-value">30</span></div>
+                <div id="game-screen">15 + 20</div>
+                <input type="text" id="answer-input" readonly>
+                <div class="numpad">
+                    <button onclick="inputNumber('7')">7</button>
+                    <button onclick="inputNumber('8')">8</button>
+                    <button onclick="inputNumber('9')">9</button>
+                    <button onclick="inputNumber('4')">4</button>
+                    <button onclick="inputNumber('5')">5</button>
+                    <button onclick="inputNumber('6')">6</button>
+                    <button onclick="inputNumber('1')">1</button>
+                    <button onclick="inputNumber('2')">2</button>
+                    <button onclick="inputNumber('3')">3</button>
+                    <button onclick="inputNumber('0')">0</button>
+                    <button onclick="clearInput()" class="numpad-control">Sil</button>
+                    <button onclick="submitAnswer()" class="numpad-submit">Gönder</button>
+                </div>
+            </div>
+            <div class="game-buttons">
+                <button id="start-button">Etkinliğe Başla</button>
+                <button id="finish-button" onclick="endGame()">Etkinliği Bitir</button>
+                <button id="fullscreen-button" onclick="toggleFullscreen()">Tam Ekran</button>
+            </div>
+        </div>
+
+        <div class="aside">
+            <h2>Etkinlik Kuralları</h2>
+            <ul>
+                <li><strong>Başla</strong> butonu ile etkinliğe başlayın. Toplam <strong>10 soru</strong> sorulacaktır.</li>
+                <li>Her soru için <strong>30 saniye</strong> süreniz var.</li>
+                <li>Cevabınızı rakamları kullanarak girin ve <strong>Gönder</strong> butonuna basın.</li>
+                <li>Doğru cevaplarda, kalan süre kadar puan kazanırsınız.</li>
+                <li>Yanlış cevapta <strong>10 puan</strong> kaybedersiniz.</li>
+                <li>Süre dolduğunda veya etkinliği bitirdiğinizde sonuçlar gösterilir.</li>
+            </ul>
+        </div>
+
+        <div class="footer">Hazırlayan: Osman AYDOĞDU</div>
+    </div>
+
+    <div class="modal-overlay" id="modal">
+        <div class="modal-content" id="modal-content">
+            <h3 id="modal-title"></h3>
+            <p id="modal-message"></p>
+            <button id="modal-button"></button>
+        </div>
+    </div>
+
+    <script>
+        const gameScreen = document.getElementById('game-screen'),
+              answerInput = document.getElementById('answer-input'),
+              scoreValue = document.getElementById('score-value'),
+              timerValue = document.getElementById('timer-value'),
+              startButton = document.getElementById('start-button'),
+              finishButton = document.getElementById('finish-button'),
+              fullscreenButton = document.getElementById('fullscreen-button'),
+              gameArea = document.getElementById('game-area'),
+              numpadButtons = document.querySelectorAll('.numpad button'),
+              modal = document.getElementById('modal'),
+              modalContent = document.getElementById('modal-content'),
+              modalTitle = document.getElementById('modal-title'),
+              modalMessage = document.getElementById('modal-message'),
+              modalButton = document.getElementById('modal-button');
+
+        let score = 0, timeLeft = 30, currentAnswer = 0, gameInterval;
+        let questionCount = 0;
+        const TOTAL_QUESTIONS = 10;
+
+        startButton.addEventListener('click', startGame);
+
+        function startGame() {
+            startButton.innerText = 'Tekrar Başla';
+            startButton.style.display = 'none';
+            finishButton.style.display = 'inline-block';
+            gameArea.style.display = 'block';
+            numpadButtons.forEach(btn => btn.disabled = false);
+            score = 0;
+            questionCount = 0;
+            scoreValue.innerText = score;
+            nextQuestion();
+        }
+
+        function nextQuestion() {
+            questionCount++;
+            if (questionCount > TOTAL_QUESTIONS) {
+                endGame();
+                return;
+            }
+            resetTimer();
+            answerInput.value = '';
+            gameArea.style.backgroundColor = '';
+
+            const num1 = Math.floor(Math.random() * 100);
+            const num2 = Math.floor(Math.random() * 100);
+            const isAddition = Math.random() < 0.5;
+
+            if (isAddition) {
+                gameScreen.innerText = `${num1} + ${num2}`;
+                currentAnswer = num1 + num2;
+            } else {
+                gameScreen.innerText = num1 >= num2 ? `${num1} - ${num2}` : `${num2} - ${num1}`;
+                currentAnswer = Math.abs(num1 - num2);
+            }
+
+            gameInterval = setInterval(updateTimer, 1000);
+        }
+
+        function updateTimer() {
+            timeLeft--;
+            timerValue.innerText = timeLeft;
+            if (timeLeft <= 0) {
+                clearInterval(gameInterval);
+                score -= 10;
+                scoreValue.innerText = score;
+                showModal('Süre Doldu!', `Doğru cevap ${currentAnswer} olmalıydı.`, false);
+            }
+        }
+
+        function resetTimer() {
+            clearInterval(gameInterval);
+            timeLeft = 30;
+            timerValue.innerText = timeLeft;
+        }
+
+        function inputNumber(num) { answerInput.value += num; }
+        function clearInput() { answerInput.value = ''; }
+
+        function submitAnswer() {
+            if (answerInput.value === '') return;
+            clearInterval(gameInterval);
+            const userAnswer = parseInt(answerInput.value, 10);
+
+            if (userAnswer === currentAnswer) {
+                score += timeLeft;
+                showModal('Tebrikler!', 'Doğru cevap verdin.', true);
+            } else {
+                score -= 10;
+                showModal('Yanlış Cevap!', `Doğru cevap ${currentAnswer} olmalıydı.`, false);
+            }
+            scoreValue.innerText = score;
+        }
+
+        function endGame() {
+            resetTimer();
+            numpadButtons.forEach(btn => btn.disabled = true);
+            finishButton.style.display = 'none';
+            showModal('Etkinlik Bitti!', `Toplam ${questionCount - 1} soruya cevap verdin.<br><strong>Skorun: ${score}</strong>`, null);
+            startButton.style.display = 'inline-block';
+        }
+
+        function showModal(title, message, isCorrect) {
+            modalTitle.innerText = title;
+            modalMessage.innerHTML = message;
+
+            modalContent.classList.remove('correct', 'incorrect');
+            if (isCorrect === true) {
+                modalContent.classList.add('correct');
+            } else if (isCorrect === false) {
+                modalContent.classList.add('incorrect');
+            }
+
+            if (title.includes('Bitti')) {
+                modalButton.innerText = 'Kapat';
+                modalButton.onclick = hideModal;
+            } else {
+                modalButton.innerText = 'Sonraki Soru';
+                modalButton.onclick = () => {
+                    hideModal();
+                    nextQuestion();
+                };
+            }
+
+            modal.style.display = 'flex';
+        }
+
+        function hideModal() {
+            modal.style.display = 'none';
+        }
+
+        function toggleFullscreen() {
+            document.body.classList.toggle('fullscreen');
+            if (document.body.classList.contains('fullscreen')) {
+                fullscreenButton.innerText = 'Tam Ekranı Kapat';
+                if (document.documentElement.requestFullscreen) {
+                    document.documentElement.requestFullscreen();
+                }
+            } else {
+                fullscreenButton.innerText = 'Tam Ekran';
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                }
+            }
+        }
+    </script>
+</body>
+</html>

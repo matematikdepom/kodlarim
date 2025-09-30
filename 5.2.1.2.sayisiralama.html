@@ -1,0 +1,556 @@
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gezegenleri Sıralama Etkinliği</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        /* Genel Stiller ve Arka Plan */
+        body {
+            font-family: 'Nunito', sans-serif;
+            margin: 0;
+            padding: 20px;
+            color: #fff;
+            background: url('https://images.pexels.com/photos/41953/milky-way-galaxy-night-sky-stars-41953.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2') no-repeat center center fixed;
+            background-size: cover;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+        }
+        /* Yatay Mod Uyarısı */
+        #orientation-warning {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.95);
+            color: white;
+            z-index: 1000;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+        #orientation-warning svg {
+            width: 80px;
+            height: 80px;
+            margin-bottom: 20px;
+            fill: #00bcd4;
+            transform: rotate(90deg);
+        }
+        #orientation-warning p {
+            font-size: 1.2em;
+            max-width: 80%;
+        }
+        @media (max-width: 768px) and (orientation: portrait) {
+            #orientation-warning {
+                display: flex;
+            }
+            .container {
+                display: none;
+            }
+        }
+        /* Ana Konteyner */
+        .container {
+            background-color: rgba(0, 0, 0, 0.75);
+            padding: 25px;
+            border-radius: 15px;
+            max-width: 95%;
+            width: 1200px;
+            box-shadow: 0 5px 25px rgba(0, 0, 0, 0.5);
+        }
+        h1 {
+            font-size: 2.5em;
+            color: #00bcd4;
+            text-shadow: 2px 2px 4px #000;
+        }
+        p {
+            font-size: 1.2em;
+        }
+        /* Hazırlayan Yazısı */
+        .author {
+            font-size: 1em;
+            color: #80deea;
+            margin-top: 10px;
+            font-style: italic;
+        }
+        /* Soru Seçimi */
+        #question-selector {
+            margin-bottom: 20px;
+        }
+        #question-selector select {
+            background-color: #00bcd4;
+            color: #fff;
+            border: none;
+            padding: 10px;
+            font-size: 1.1em;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+        #question-selector select:hover {
+            background-color: #26c6da;
+        }
+        /* Sürükle-Bırak Alanları */
+        .containers-wrapper {
+            margin: 30px 0;
+        }
+        #source-container {
+            border: 2px dashed #00bcd4;
+            padding: 15px;
+            margin-bottom: 30px;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 15px;
+            min-height: 80px;
+            border-radius: 10px;
+        }
+        #target-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+            min-height: 100px;
+        }
+        .drop-zone {
+            background-color: rgba(255, 255, 255, 0.1);
+            border: 2px dashed #fff;
+            border-radius: 10px;
+            width: 140px;
+            height: 90px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: background-color 0.3s, transform 0.3s;
+        }
+        .operator {
+            font-size: 2em;
+            font-weight: bold;
+            color: #00bcd4;
+            padding: 0 5px;
+        }
+        .distance {
+            background-color: #2e7d32;
+            color: white;
+            padding: 8px;
+            border-radius: 8px;
+            cursor: grab;
+            user-select: none;
+            text-align: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+            transition: transform 0.2s, opacity 0.2s;
+            width: 130px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 70px;
+            touch-action: none;
+        }
+        .distance strong {
+            font-size: 1.0em;
+            color: #80deea;
+            margin-bottom: 5px;
+        }
+        .distance span {
+            font-size: 0.8em;
+            font-weight: bold;
+        }
+        .distance.dragging {
+            opacity: 0.5;
+            cursor: grabbing;
+            transform: scale(1.05);
+        }
+        .drop-zone.drag-over {
+            background-color: rgba(0, 188, 212, 0.4);
+            border-style: solid;
+        }
+        .buttons {
+            margin-top: 30px;
+        }
+        button {
+            background-color: #00bcd4;
+            color: #fff;
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.2em;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            margin: 0 10px;
+            transition: background-color 0.3s, transform 0.2s;
+        }
+        button:hover {
+            background-color: #26c6da;
+            transform: translateY(-2px);
+        }
+        #feedback {
+            margin-top: 20px;
+            font-size: 1.5em;
+            font-weight: bold;
+            height: 30px;
+            transition: color 0.3s;
+        }
+        .success {
+            color: #00ff7f;
+        }
+        .error {
+            color: #ff6347;
+        }
+        @media (max-width: 1250px) {
+            .container {
+                width: 95%;
+            }
+        }
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+            .container {
+                padding: 15px;
+            }
+            h1 {
+                font-size: 1.8em;
+            }
+            p {
+                font-size: 1em;
+            }
+            .operator {
+                flex-basis: 100%;
+                text-align: center;
+                transform: rotate(90deg);
+                margin: 5px 0;
+            }
+            .drop-zone {
+                flex-basis: 40%;
+            }
+        }
+        @media (max-width: 480px) {
+            h1 {
+                font-size: 1.5em;
+            }
+            button {
+                padding: 12px 20px;
+                font-size: 1em;
+            }
+            .drop-zone {
+                flex-basis: 80%;
+            }
+        }
+    </style>
+    <script src="scorm_api.js"></script>
+</head>
+<body>
+    <div id="orientation-warning">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M16.5,4.5a3,3,0,0,1,3-3,3,3,0,0,1,3,3,3,3,0,0,1-3,3A3,3,0,0,1,16.5,4.5ZM18,9.5a3,3,0,1,1-3-3A3,3,0,0,1,18,9.5Zm0,7a3,3,0,1,1-3-3A3,3,0,0,1,18,16.5ZM4.5,19.5a3,3,0,1,1,3-3A3,3,0,0,1,4.5,19.5ZM19,15v4a2,2,0,0,1-2,2H7a2,2,0,0,1-2-2V5A2,2,0,0,1,7,3h5.05a6,6,0,0,0,0,3H7v13H17V14.9a5.13,5.13,0,0,0,2-0.12V15Z"></path></svg>
+        <p>En iyi deneyim için lütfen cihazınızı yatay konuma getirin.</p>
+    </div>
+    <div class="container">
+        <h1>Gezegenleri Sıralama Etkinliği</h1>
+        <p class="author">Hazırlayan: Osman Aydoğdu</p>
+        <div id="question-selector">
+            <select id="question-select">
+                <option value="distance">Güneş'e Olan Uzaklık</option>
+                <option value="diameter">Çap (Büyüklük)</option>
+                <option value="moons">Ay Sayısı</option>
+                <option value="orbit">Yörünge Süresi</option>
+                <option value="density">Yoğunluk</option>
+                <option value="mass">Kütle</option>
+            </select>
+        </div>
+        <p id="instruction">Aşağıdaki gezegenleri Güneş'e olan uzaklıklarına göre en yakından en uzağa olacak şekilde sıralayınız.</p>
+        <div class="containers-wrapper">
+            <div id="source-container"></div>
+            <hr style="border-color: rgba(0,188,212,0.5); margin: 30px 0;">
+            <div id="target-container"></div>
+        </div>
+        <div class="buttons">
+            <button id="checkBtn">Kontrol Et</button>
+            <button id="resetBtn">Yeniden Başla</button>
+        </div>
+        <div id="feedback" class=""></div>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const sourceContainer = document.getElementById('source-container');
+            const targetContainer = document.getElementById('target-container');
+            const checkBtn = document.getElementById('checkBtn');
+            const resetBtn = document.getElementById('resetBtn');
+            const feedback = document.getElementById('feedback');
+            const questionSelect = document.getElementById('question-select');
+            const instruction = document.getElementById('instruction');
+
+            const questions = {
+                distance: {
+                    instruction: "Aşağıdaki gezegenleri Güneş'e olan uzaklıklarına göre en yakından en uzağa olacak şekilde sıralayınız.",
+                    data: [
+                        { name: 'Merkür', text: '57 909 175 km', value: 57909175 },
+                        { name: 'Venüs', text: '108 208 930 km', value: 108208930 },
+                        { name: 'Dünya', text: '149 597 890 km', value: 149597890 },
+                        { name: 'Mars', text: '227 936 640 km', value: 227936640 },
+                        { name: 'Jüpiter', text: '778 412 020 km', value: 778412020 },
+                        { name: 'Satürn', text: '1 426 725 400 km', value: 1426725400 },
+                        { name: 'Uranüs', text: '2 870 972 200 km', value: 2870972200 },
+                        { name: 'Neptün', text: '4 498 252 900 km', value: 4498252900 },
+                    ]
+                },
+                diameter: {
+                    instruction: "Aşağıdaki gezegenleri çaplarına göre en küçükten en büyüğe olacak şekilde sıralayınız.",
+                    data: [
+                        { name: 'Merkür', text: '4 879 km', value: 4879 },
+                        { name: 'Mars', text: '6 792 km', value: 6792 },
+                        { name: 'Venüs', text: '12 104 km', value: 12104 },
+                        { name: 'Dünya', text: '12 742 km', value: 12742 },
+                        { name: 'Neptün', text: '49 244 km', value: 49244 },
+                        { name: 'Uranüs', text: '50 724 km', value: 50724 },
+                        { name: 'Satürn', text: '116 464 km', value: 116464 },
+                        { name: 'Jüpiter', text: '139 820 km', value: 139820 },
+                    ]
+                },
+                moons: {
+                    instruction: "Aşağıdaki gezegenleri sahip oldukları ay sayısına göre en azdan en fazlaya olacak şekilde sıralayınız.",
+                    data: [
+                        { name: 'Merkür', text: '0 ay', value: 0 },
+                        { name: 'Venüs', text: '0 ay', value: 0 },
+                        { name: 'Dünya', text: '1 ay', value: 1 },
+                        { name: 'Mars', text: '2 ay', value: 2 },
+                        { name: 'Neptün', text: '14 ay', value: 14 },
+                        { name: 'Uranüs', text: '27 ay', value: 27 },
+                        { name: 'Jüpiter', text: '79 ay', value: 79 },
+                        { name: 'Satürn', text: '83 ay', value: 83 },
+                    ]
+                },
+                orbit: {
+                    instruction: "Aşağıdaki gezegenleri yörünge sürelerine göre en kısadan en uzuna olacak şekilde sıralayınız.",
+                    data: [
+                        { name: 'Merkür', text: '88 gün', value: 88 },
+                        { name: 'Venüs', text: '225 gün', value: 225 },
+                        { name: 'Dünya', text: '365,25 gün', value: 365.25 },
+                        { name: 'Mars', text: '687 gün', value: 687 },
+                        { name: 'Jüpiter', text: '11,86 yıl', value: 11.86 },
+                        { name: 'Satürn', text: '29,46 yıl', value: 29.46 },
+                        { name: 'Uranüs', text: '84 yıl', value: 84 },
+                        { name: 'Neptün', text: '164,8 yıl', value: 164.8 },
+                    ]
+                },
+                density: {
+                    instruction: "Aşağıdaki gezegenleri yoğunluklarına göre en düşükten en yükseğe olacak şekilde sıralayınız.",
+                    data: [
+                        { name: 'Satürn', text: '0,687 g/cm³', value: 0.687 },
+                        { name: 'Uranüs', text: '1,27 g/cm³', value: 1.27 },
+                        { name: 'Neptün', text: '1,638 g/cm³', value: 1.638 },
+                        { name: 'Jüpiter', text: '1,326 g/cm³', value: 1.326 },
+                        { name: 'Mars', text: '3,933 g/cm³', value: 3.933 },
+                        { name: 'Venüs', text: '5,243 g/cm³', value: 5.243 },
+                        { name: 'Dünya', text: '5,514 g/cm³', value: 5.514 },
+                        { name: 'Merkür', text: '5,427 g/cm³', value: 5.427 },
+                    ]
+                },
+                mass: {
+                    instruction: "Aşağıdaki gezegenleri kütlelerine göre en hafiften en ağıra olacak şekilde sıralayınız.",
+                    data: [
+                        { name: 'Merkür', text: '3,301 × 10²³ kg', value: 3.301e23 },
+                        { name: 'Mars', text: '6,417 × 10²³ kg', value: 6.417e23 },
+                        { name: 'Venüs', text: '4,867 × 10²⁴ kg', value: 4.867e24 },
+                        { name: 'Dünya', text: '5,972 × 10²⁴ kg', value: 5.972e24 },
+                        { name: 'Uranüs', text: '8,681 × 10²⁵ kg', value: 8.681e25 },
+                        { name: 'Neptün', text: '1,024 × 10²⁶ kg', value: 1.024e26 },
+                        { name: 'Satürn', text: '5,684 × 10²⁶ kg', value: 5.684e26 },
+                        { name: 'Jüpiter', text: '1,898 × 10²⁷ kg', value: 1.898e27 },
+                    ]
+                }
+            };
+
+            let currentCorrectOrder = [];
+            let draggedItem = null;
+
+            function shuffle(array) {
+                for (let i = array.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [array[i], array[j]] = [array[j], array[i]];
+                }
+                return array;
+            }
+
+            function initializeActivity(questionType) {
+                sourceContainer.innerHTML = '';
+                targetContainer.innerHTML = '';
+                feedback.innerHTML = '';
+                feedback.className = '';
+                instruction.textContent = questions[questionType].instruction;
+
+                const currentGamePlanets = shuffle([...questions[questionType].data]).slice(0, 6);
+                currentCorrectOrder = currentGamePlanets.map(p => p.value).sort((a, b) => a - b);
+
+                const shuffledGamePlanets = shuffle([...currentGamePlanets]);
+                shuffledGamePlanets.forEach(planet => {
+                    const div = document.createElement('div');
+                    div.className = 'distance';
+                    div.draggable = true;
+                    div.dataset.value = planet.value;
+                    div.innerHTML = `<strong>${planet.name}</strong><span>${planet.text}</span>`;
+                    sourceContainer.appendChild(div);
+                });
+
+                for (let i = 0; i < 6; i++) {
+                    const dropZone = document.createElement('div');
+                    dropZone.className = 'drop-zone';
+                    targetContainer.appendChild(dropZone);
+                    if (i < 5) {
+                        const operator = document.createElement('div');
+                        operator.className = 'operator';
+                        operator.textContent = '<';
+                        targetContainer.appendChild(operator);
+                    }
+                }
+
+                addDragAndDropListeners();
+            }
+
+            function addDragAndDropListeners() {
+                const draggables = document.querySelectorAll('.distance');
+                draggables.forEach(draggable => {
+                    draggable.addEventListener('dragstart', handleDragStart);
+                    draggable.addEventListener('dragend', handleDragEnd);
+                    draggable.addEventListener('touchstart', handleTouchStart, { passive: false });
+                });
+
+                const allDropTargets = document.querySelectorAll('.drop-zone, #source-container');
+                allDropTargets.forEach(target => {
+                    target.addEventListener('dragover', handleDragOver);
+                    target.addEventListener('dragleave', handleDragLeave);
+                    target.addEventListener('drop', handleDrop);
+                });
+
+                document.addEventListener('touchmove', handleTouchMove, { passive: false });
+                document.addEventListener('touchend', handleTouchEnd);
+            }
+
+            function handleDragStart(e) {
+                draggedItem = this;
+                this.classList.add('dragging');
+                if (e.dataTransfer) e.dataTransfer.effectAllowed = 'move';
+            }
+
+            function handleDragEnd() {
+                if (draggedItem) {
+                    draggedItem.classList.remove('dragging');
+                }
+                document.querySelectorAll('.drag-over').forEach(zone => zone.classList.remove('drag-over'));
+                draggedItem = null;
+            }
+
+            function handleDragOver(e) {
+                e.preventDefault();
+                const target = this.classList.contains('drop-zone') ? this : null;
+                if (target) {
+                    target.classList.add('drag-over');
+                }
+            }
+
+            function handleDragLeave() {
+                this.classList.remove('drag-over');
+            }
+
+            function handleDrop(e) {
+                e.preventDefault();
+                let dropTarget = e.target.closest('.drop-zone, #source-container');
+
+                if (dropTarget && draggedItem) {
+                    if (dropTarget.classList.contains('drop-zone') && dropTarget.children.length > 0) {
+                        sourceContainer.appendChild(dropTarget.firstElementChild);
+                    }
+                    dropTarget.appendChild(draggedItem);
+                }
+                handleDragEnd();
+            }
+
+            function handleTouchStart(e) {
+                e.preventDefault();
+                draggedItem = this;
+                this.classList.add('dragging');
+            }
+
+            function handleTouchMove(e) {
+                if (!draggedItem) return;
+                e.preventDefault();
+                const prevOver = document.querySelector('.drag-over');
+                if (prevOver) prevOver.classList.remove('drag-over');
+                const touch = e.touches[0];
+                const elementUnderTouch = document.elementFromPoint(touch.clientX, touch.clientY);
+                if (!elementUnderTouch) return;
+                const dropZone = elementUnderTouch.closest('.drop-zone');
+                if (dropZone) {
+                    dropZone.classList.add('drag-over');
+                }
+            }
+
+            function handleTouchEnd(e) {
+                if (!draggedItem) return;
+                const lastOver = document.querySelector('.drag-over');
+                if (lastOver) lastOver.classList.remove('drag-over');
+                const touch = e.changedTouches[0];
+                const elementUnderTouch = document.elementFromPoint(touch.clientX, touch.clientY);
+                let dropTarget = null;
+                if (elementUnderTouch) {
+                    dropTarget = elementUnderTouch.closest('.drop-zone, #source-container');
+                }
+
+                if (dropTarget) {
+                    if (dropTarget.classList.contains('drop-zone') && dropTarget.children.length > 0) {
+                        sourceContainer.appendChild(dropTarget.firstElementChild);
+                    }
+                    dropTarget.appendChild(draggedItem);
+                }
+
+                handleDragEnd();
+            }
+
+            checkBtn.addEventListener('click', () => {
+                const currentDropZones = document.querySelectorAll('#target-container .drop-zone');
+                let allCorrect = true;
+                let allFilled = true;
+                currentDropZones.forEach((zone, index) => {
+                    if (zone.children.length === 0) {
+                        allFilled = false;
+                        return;
+                    }
+                    const placedValue = parseFloat(zone.firstElementChild.dataset.value);
+                    if (placedValue !== currentCorrectOrder[index]) {
+                        allCorrect = false;
+                    }
+                });
+                feedback.className = '';
+                if (!allFilled) {
+                    feedback.textContent = 'Lütfen tüm kutucukları doldurun!';
+                    feedback.classList.add('error');
+                } else if (allCorrect) {
+                    feedback.textContent = 'Harika! Tebrikler, doğru sıraladın!';
+                    feedback.classList.add('success');
+                } else {
+                    feedback.textContent = 'Hmm, sıralama yanlış. Tekrar dene!';
+                    feedback.classList.add('error');
+                }
+            });
+
+            resetBtn.addEventListener('click', () => {
+                initializeActivity(questionSelect.value);
+            });
+
+            questionSelect.addEventListener('change', () => {
+                initializeActivity(questionSelect.value);
+            });
+
+            initializeActivity('distance');
+        });
+    </script>
+</body>
+</html>

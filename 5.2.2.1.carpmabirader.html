@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Çarpma Birader! — Düzeltilmiş</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-red: #ff4d4d;
+            --primary-blue: #4d79ff;
+            --reward-green: #4caf50;
+            --penalty-red: #d32f2f;
+            --background: #f4f7fc;
+            --card-bg: #ffffff;
+            --text-color: #333333;
+            --shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            --border-radius: 12px;
+            --cell-size: 80px;
+            --pawn-size: 40px;
+            --grid-gap: 10px;
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Poppins', sans-serif;
+            background: var(--background);
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        #game-container {
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            flex-wrap: wrap;
+            padding: 20px;
+            gap: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        #game-board {
+            position: relative; /* önemli: piyonlar buraya göre konumlanacak */
+            display: grid;
+            grid-template-columns: repeat(5, var(--cell-size));
+            gap: var(--grid-gap);
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            width: calc(5 * var(--cell-size) + 4 * var(--grid-gap) + 40px);
+            height: calc(5 * var(--cell-size) + 4 * var(--grid-gap) + 40px);
+            box-sizing: border-box;
+        }
+
+        .cell {
+            width: var(--cell-size);
+            height: var(--cell-size);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.2rem;
+            font-weight: 600;
+            border-radius: 8px;
+            transition: transform 0.18s ease;
+            box-sizing: border-box;
+        }
+
+        .cell.path {
+            background: #e0e7ff;
+            border: 2px solid #c7d2fe;
+        }
+
+        .cell.path:hover {
+            transform: scale(1.03);
+        }
+
+        .cell-reward {
+            background: var(--reward-green);
+            color: white;
+            border: none;
+        }
+
+        .cell-penalty {
+            background: var(--penalty-red);
+            color: white;
+            border: none;
+        }
+
+        .home-area {
+            width: var(--cell-size);
+            height: var(--cell-size);
+            border-radius: 8px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: absolute;
+            pointer-events: none;
+        }
+
+        #home-red {
+            background: var(--primary-red);
+            bottom: 20px;
+            left: 20px;
+        }
+
+        #home-blue {
+            background: var(--primary-blue);
+            bottom: 20px;
+            right: 20px;
+        }
+
+        .pawn {
+            width: var(--pawn-size);
+            height: var(--pawn-size);
+            border-radius: 50%;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            transition: left 0.35s ease, top 0.35s ease, transform 0.2s ease;
+            position: absolute; /* doğrudan #game-board göre absolute */
+            transform: translate(-50%, -50%);
+        }
+
+        #pawn-red { background: var(--primary-red); }
+        #pawn-blue { background: var(--primary-blue); }
+
+        #ui-panel {
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            max-width: 400px;
+            width: 100%;
+            text-align: center;
+            box-sizing: border-box;
+        }
+
+        #game-title { font-size: 2rem; color: var(--text-color); margin: 0 0 20px; }
+
+        #turn-indicator { display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 20px; }
+        #turn-color-box { width: 30px; height: 30px; border-radius: 6px; border: 2px solid #e0e0e0; }
+
+        #timer-area { margin-bottom: 20px; font-weight: 600; color: #ff4d4d; }
+        #question-area { background: #e0e7ff; padding: 15px; border-radius: 8px; margin-bottom: 20px; font-size: 1.2rem; }
+        #answer-area { display: flex; gap: 10px; margin-bottom: 20px; }
+
+        #answer-input { padding: 10px; border: 2px solid #c7d2fe; border-radius: 8px; font-size: 1rem; width: 100%; box-sizing: border-box; }
+        #submit-answer { padding: 10px 20px; background: var(--primary-blue); color: white; border: none; border-radius: 8px; cursor: pointer; transition: background 0.3s ease; }
+        #submit-answer:hover { background: #3b5fc7; }
+
+        #dice-area { margin-bottom: 20px; font-weight: 600; }
+        #dice-display { font-size: 2rem; color: var(--primary-red); transition: transform 0.3s ease; }
+
+        #dice-display.rolling { animation: roll 0.5s ease-in-out; }
+        @keyframes roll { 0% { transform: rotate(0deg); } 50% { transform: rotate(180deg); } 100% { transform: rotate(360deg); } }
+
+        #message-area { min-height: 50px; display: flex; align-items: center; justify-content: center; font-size: 1rem; }
+
+        #restart-button { padding: 10px 20px; background: var(--primary-red); color: white; border: none; border-radius: 8px; cursor: pointer; transition: background 0.3s ease; }
+        #restart-button:hover { background: #cc3f3f; }
+
+        .hidden { display: none; }
+
+        /* Kurallar kutusu */
+        #rules-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: flex; justify-content: center; align-items: center; z-index: 1000; }
+        #rules-box { background: var(--card-bg); padding: 30px; border-radius: var(--border-radius); max-width: 500px; width: 90%; box-shadow: var(--shadow); }
+        #rules-box h2 { font-size: 1.8rem; margin-bottom: 20px; }
+        #rules-box ul { text-align: left; margin-bottom: 20px; font-size: 1rem; line-height: 1.6; }
+        #start-game-button { padding: 10px 20px; background: var(--primary-blue); color: white; border: none; border-radius: 8px; cursor: pointer; transition: background 0.3s ease; }
+        #start-game-button:hover { background: #3b5fc7; }
+
+        footer { text-align: center; padding: 20px; background: var(--card-bg); color: var(--text-color); font-size: 0.9rem; margin-top: 20px; }
+
+        /* responsive */
+        @media (max-width: 900px) {
+            #game-container { flex-direction: column; align-items: center; }
+            #game-board, #ui-panel { width: 100%; max-width: 420px; }
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <div id="game-board">
+            <!-- Kareler (1..25) -->
+            <div class="cell path" id="cell-1">1</div>
+            <div class="cell path" id="cell-2">2</div>
+            <div class="cell path" id="cell-3">3</div>
+            <div class="cell path cell-reward" id="cell-4">4</div>
+            <div class="cell path" id="cell-5">5</div>
+            <div class="cell path" id="cell-6">6</div>
+            <div class="cell path" id="cell-7">7</div>
+            <div class="cell path cell-penalty" id="cell-8">8</div>
+            <div class="cell path" id="cell-9">9</div>
+            <div class="cell path" id="cell-10">10</div>
+            <div class="cell path" id="cell-11">11</div>
+            <div class="cell path cell-reward" id="cell-12">12</div>
+            <div class="cell path" id="cell-13">13</div>
+            <div class="cell path" id="cell-14">14</div>
+            <div class="cell path" id="cell-15">15</div>
+            <div class="cell path" id="cell-16">16</div>
+            <div class="cell path cell-penalty" id="cell-17">17</div>
+            <div class="cell path" id="cell-18">18</div>
+            <div class="cell path" id="cell-19">19</div>
+            <div class="cell path" id="cell-20">20</div>
+            <div class="cell path cell-reward" id="cell-21">21</div>
+            <div class="cell path" id="cell-22">22</div>
+            <div class="cell path" id="cell-23">23</div>
+            <div class="cell path" id="cell-24">24</div>
+            <div class="cell path" id="cell-25">Bitiş!</div>
+
+            <!-- Home kutucukları (sadece görsel) -->
+            <div class="home-area" id="home-red"></div>
+            <div class="home-area" id="home-blue"></div>
+
+            <!-- Piyonlar: doğrudan game-board içinde, absolute konumlandırma -->
+            <div class="pawn" id="pawn-red" aria-label="Kırmızı piyon"></div>
+            <div class="pawn" id="pawn-blue" aria-label="Mavi piyon"></div>
+        </div>
+
+        <div id="ui-panel">
+            <h1 id="game-title">Çarpma Birader!</h1>
+            <div id="turn-indicator">
+                <p>Sıradaki Oyuncu:</p>
+                <div id="turn-color-box" style="background-color: var(--primary-red);"></div>
+            </div>
+            <div id="timer-area">
+                <p>Kalan Süre: <span id="timer-display">20</span>s</p>
+            </div>
+            <div id="question-area">
+                <p id="question-text">10 x 29 = ?</p>
+            </div>
+            <div id="answer-area">
+                <input type="number" id="answer-input" placeholder="Cevabınızı yazın...">
+                <button id="submit-answer">Cevapla</button>
+            </div>
+            <div id="dice-area">
+                <p>Sayı Küpü:</p>
+                <div id="dice-display">?</div>
+            </div>
+            <div id="message-area">
+                <p id="message-text">Sıra Kırmızı oyuncusunda.</p>
+            </div>
+            <button id="restart-button" class="hidden">Yeniden Başlat</button>
+        </div>
+    </div>
+
+    <div id="rules-overlay">
+        <div id="rules-box">
+            <h2>Oyun Kuralları</h2>
+            <ul>
+                <li>➤ Oyun mavi ve kırmızı renkle temsil edilen 2 oyuncu ile oynanır.</li>
+                <li>➤ Ekrana gelen soru 20 saniyede cevaplanmalıdır.</li>
+                <li>➤ Doğru cevap verildiğinde sayı küpünde beliren sayı kadar piyon ilerler.</li>
+                <li>➤ Yanlış cevapta veya süre aşımında sıra rakibe geçer.</li>
+                <li>➤ Yeşil kareler 2 kare ileri, kırmızı kareler 2 kare geri hareket ettirir.</li>
+                <li>➤ Bitiş karesine (25) ilk ulaşan kazanır!</li>
+            </ul>
+            <button id="start-game-button">Oyuna Başla</button>
+        </div>
+    </div>
+
+    <footer>
+        Hazırlayan: Osman AYDOĞDU
+    </footer>
+
+    <script>
+        // Oyun durumu
+        let currentPlayer = 'red';
+        let redPosition = 0; // 0 = home
+        let bluePosition = 0;
+        let timer;
+        let currentQuestion;
+        let correctAnswer;
+        let isGameActive = false;
+
+        // DOM referansları
+        const board = document.getElementById('game-board');
+        const cells = Array.from(document.querySelectorAll('.cell')); // sıralı 1..25
+        const pawnRed = document.getElementById('pawn-red');
+        const pawnBlue = document.getElementById('pawn-blue');
+        const homeRed = document.getElementById('home-red');
+        const homeBlue = document.getElementById('home-blue');
+
+        // Başlatma butonu
+        document.getElementById('start-game-button').addEventListener('click', () => {
+            document.getElementById('rules-overlay').style.display = 'none';
+            startGame();
+        });
+
+        // Enter tuşuna basınca cevap gönderme
+        document.getElementById('answer-input').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') document.getElementById('submit-answer').click();
+        });
+
+        function startGame() {
+            redPosition = 0;
+            bluePosition = 0;
+            currentPlayer = 'red';
+            isGameActive = true;
+            document.getElementById('turn-color-box').style.backgroundColor = 'var(--primary-red)';
+            document.getElementById('message-text').textContent = 'Sıra Kırmızı oyuncusunda.';
+            document.getElementById('restart-button').classList.add('hidden');
+            document.getElementById('submit-answer').disabled = false;
+            generateQuestion();
+            updatePawnPositions();
+            startTimer();
+        }
+
+        // Soru üret
+        function generateQuestion() {
+            const num1 = Math.floor(Math.random() * 10) + 1;
+            const num2 = Math.floor(Math.random() * 30) + 1;
+            currentQuestion = `${num1} x ${num2} = ?`;
+            correctAnswer = num1 * num2;
+            document.getElementById('question-text').textContent = currentQuestion;
+            document.getElementById('answer-input').value = '';
+            document.getElementById('answer-input').focus();
+            document.getElementById('dice-display').textContent = '?';
+        }
+
+        // Zamanlayıcı
+        function startTimer() {
+            let timeLeft = 20;
+            document.getElementById('timer-display').textContent = timeLeft;
+            clearInterval(timer);
+            timer = setInterval(() => {
+                timeLeft--;
+                document.getElementById('timer-display').textContent = timeLeft;
+                if (timeLeft <= 0 && isGameActive) {
+                    clearInterval(timer);
+                    document.getElementById('message-text').textContent = 'Süre doldu! Sıra diğer oyuncuda.';
+                    switchPlayer();
+                }
+            }, 1000);
+        }
+
+        // Piyon pozisyonlarını güncelle (dinamik olarak hücrelerin merkezine göre)
+        function updatePawnPositions() {
+            const boardRect = board.getBoundingClientRect();
+            const pawnSize = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--pawn-size')) || 40;
+
+            function placePawnAt(pawnEl, pos) {
+                if (pos === 0) {
+                    // home -> home alanının merkezine yerleştir
+                    const homeEl = pawnEl === pawnRed ? homeRed : homeBlue;
+                    const r = homeEl.getBoundingClientRect();
+                    const left = r.left - boardRect.left + r.width / 2;
+                    const top = r.top - boardRect.top + r.height / 2;
+                    pawnEl.style.left = `${left}px`;
+                    pawnEl.style.top = `${top}px`;
+                } else {
+                    const cellEl = cells[pos - 1];
+                    const r = cellEl.getBoundingClientRect();
+                    const left = r.left - boardRect.left + r.width / 2;
+                    const top = r.top - boardRect.top + r.height / 2;
+                    pawnEl.style.left = `${left}px`;
+                    pawnEl.style.top = `${top}px`;
+                }
+            }
+
+            placePawnAt(pawnRed, redPosition);
+            placePawnAt(pawnBlue, bluePosition);
+        }
+
+        // Cevap kontrolü
+        document.getElementById('submit-answer').addEventListener('click', () => {
+            if (!isGameActive) return;
+            const answer = parseInt(document.getElementById('answer-input').value, 10);
+            if (isNaN(answer)) {
+                document.getElementById('message-text').textContent = 'Lütfen bir sayı girin!';
+                return;
+            }
+            clearInterval(timer);
+            if (answer === correctAnswer) {
+                const diceRoll = Math.floor(Math.random() * 6) + 1;
+                const diceDisplay = document.getElementById('dice-display');
+                diceDisplay.classList.add('rolling');
+                setTimeout(() => {
+                    diceDisplay.classList.remove('rolling');
+                    diceDisplay.textContent = diceRoll;
+
+                    if (currentPlayer === 'red') {
+                        redPosition = Math.min(redPosition + diceRoll, 25);
+                        updatePawnPositions();
+                        checkSpecialCell('red', redPosition);
+                    } else {
+                        bluePosition = Math.min(bluePosition + diceRoll, 25);
+                        updatePawnPositions();
+                        checkSpecialCell('blue', bluePosition);
+                    }
+
+                    document.getElementById('message-text').textContent = `Doğru cevap! ${currentPlayer === 'red' ? 'Kırmızı' : 'Mavi'} ${diceRoll} kare ilerledi.`;
+                    // kazanan kontrolü
+                    setTimeout(() => checkWin(), 250);
+                }, 500);
+            } else {
+                document.getElementById('message-text').textContent = 'Yanlış cevap! Sıra diğer oyuncuda.';
+                switchPlayer();
+            }
+        });
+
+        // Özel kare kontrolü
+        function checkSpecialCell(player, position) {
+            if (position === 0 || position > 25) return;
+            const cell = document.getElementById(`cell-${position}`);
+            let message = '';
+            const beforePos = (player === 'red') ? (player === 'red' ? redPosition : bluePosition) : (player === 'blue' ? bluePosition : redPosition);
+
+            if (cell.classList.contains('cell-reward')) {
+                if (player === 'red') {
+                    redPosition = Math.min(redPosition + 2, 25);
+                    message = ' Ödül karesi: 2 kare ileri!';
+                } else {
+                    bluePosition = Math.min(bluePosition + 2, 25);
+                    message = ' Ödül karesi: 2 kare ileri!';
+                }
+            } else if (cell.classList.contains('cell-penalty')) {
+                if (player === 'red') {
+                    redPosition = Math.max(redPosition - 2, 0);
+                    message = ' Ceza karesi: 2 kare geri!';
+                } else {
+                    bluePosition = Math.max(bluePosition - 2, 0);
+                    message = ' Ceza karesi: 2 kare geri!';
+                }
+            }
+
+            if (message) {
+                document.getElementById('message-text').textContent += message;
+                updatePawnPositions();
+
+                // Eğer oyuncunun pozisyonu değiştiyse, tekrar kontrol et (ör. ödül->yine özel kareye düşebilir)
+                const newPos = player === 'red' ? redPosition : bluePosition;
+                if (newPos !== position) {
+                    setTimeout(() => checkSpecialCell(player, newPos), 300);
+                }
+            }
+        }
+
+        // Oyuncu değiştir
+        function switchPlayer() {
+            if (!isGameActive) return;
+            currentPlayer = currentPlayer === 'red' ? 'blue' : 'red';
+            document.getElementById('turn-color-box').style.backgroundColor = currentPlayer === 'red' ? 'var(--primary-red)' : 'var(--primary-blue)';
+            document.getElementById('message-text').textContent = `Sıra ${currentPlayer === 'red' ? 'Kırmızı' : 'Mavi'} oyuncusunda.`;
+            generateQuestion();
+            startTimer();
+        }
+
+        // Kazananı kontrol et
+        function checkWin() {
+            if (redPosition >= 25) {
+                document.getElementById('message-text').textContent = 'Kırmızı oyuncu kazandı!';
+                endGame();
+            } else if (bluePosition >= 25) {
+                document.getElementById('message-text').textContent = 'Mavi oyuncu kazandı!';
+                endGame();
+            } else {
+                // oyun devam
+                switchPlayer();
+            }
+        }
+
+        // Oyunu bitir
+        function endGame() {
+            isGameActive = false;
+            clearInterval(timer);
+            document.getElementById('submit-answer').disabled = true;
+            document.getElementById('restart-button').classList.remove('hidden');
+        }
+
+        // Yeniden başlat tuşu
+        document.getElementById('restart-button').addEventListener('click', () => {
+            document.getElementById('rules-overlay').style.display = 'flex';
+            isGameActive = false;
+            clearInterval(timer);
+        });
+
+        // Pencere boyutu değiştiğinde piyonları yeniden hizala
+        window.addEventListener('resize', () => {
+            updatePawnPositions();
+        });
+
+        // İlk render
+        window.addEventListener('load', () => {
+            // cells dizisinin doğru sırada olduğundan emin ol (id'ye göre sırala)
+            cells.sort((a,b) => {
+                const ia = parseInt(a.id.replace('cell-',''),10);
+                const ib = parseInt(b.id.replace('cell-',''),10);
+                return ia - ib;
+            });
+            updatePawnPositions();
+        });
+    </script>
+</body>
+</html>

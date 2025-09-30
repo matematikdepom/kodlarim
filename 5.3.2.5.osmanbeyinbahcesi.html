@@ -1,0 +1,459 @@
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Osman Bey'in Bahçesi Etkinliği</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        /* Genel Stiller ve Mobil Öncelikli Tasarım */
+        :root {
+            --primary-color: #6366f1; /* Modern indigo */
+            --secondary-color: #f59e0b; /* Canlı amber */
+            --success-color: #10b981; /* Zümrüt yeşili */
+            --danger-color: #ef4444; /* Canlı kırmızı */
+            --light-gray: #f9fafb; /* Daha parlak açık gri */
+            --dark-gray: #1f2937; /* Modern koyu gri */
+            --border-radius: 12px; /* Daha yumuşak köşeler */
+            --shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #e0e7ff, #fefce8); /* Modern gradient arka plan */
+            color: var(--dark-gray);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 900px;
+            background: white;
+            padding: 30px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 8px;
+            background: linear-gradient(to right, var(--primary-color), var(--secondary-color));
+        }
+
+        h1 {
+            color: var(--primary-color);
+            margin-bottom: 20px;
+            font-size: 2.5em;
+            font-weight: 700;
+            position: relative;
+        }
+
+        h1::after {
+            content: '';
+            display: block;
+            width: 60px;
+            height: 4px;
+            background: var(--secondary-color);
+            margin: 10px auto;
+            border-radius: 2px;
+        }
+
+        .instructions {
+            margin-bottom: 25px;
+            line-height: 1.7;
+            font-size: 1.15em;
+            color: #4b5563;
+        }
+
+        #grid-container {
+            display: grid;
+            grid-template-columns: repeat(13, 1fr);
+            grid-template-rows: repeat(13, 1fr);
+            border: 3px solid var(--primary-color);
+            margin: 25px auto;
+            touch-action: none;
+            cursor: pointer;
+            width: 100%;
+            max-width: 450px;
+            background: #f1f5f9;
+            border-radius: 8px;
+            padding: 5px;
+        }
+
+        .grid-cell {
+            aspect-ratio: 1 / 1;
+            border: 1px solid #e5e7eb;
+            background: #fff;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .grid-cell.selected {
+            background: var(--secondary-color);
+            border: 1px solid #d97706;
+            transform: scale(1.05);
+        }
+
+        .grid-cell:hover {
+            background: #e0e7ff;
+        }
+
+        .question-content {
+            margin-top: 25px;
+        }
+
+        .question-content input {
+            padding: 12px;
+            font-size: 1.2em;
+            border: 2px solid #d1d5db;
+            border-radius: var(--border-radius);
+            text-align: center;
+            width: 180px;
+            margin-top: 15px;
+            transition: border-color 0.3s ease;
+        }
+
+        .question-content input:focus {
+            border-color: var(--primary-color);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+        }
+
+        .feedback {
+            margin-top: 20px;
+            font-size: 1.2em;
+            font-weight: 500;
+            min-height: 40px;
+            padding: 12px;
+            border-radius: var(--border-radius);
+            transition: all 0.3s ease;
+        }
+
+        .feedback.success {
+            color: var(--success-color);
+            background: #d1fae5;
+        }
+
+        .feedback.error {
+            color: var(--danger-color);
+            background: #fee2e2;
+        }
+
+        .controls {
+            margin-top: 20px;
+        }
+
+        .controls button {
+            padding: 12px 30px;
+            font-size: 1.1em;
+            border: none;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            background: var(--primary-color);
+            color: white;
+            margin: 10px 8px;
+            transition: all 0.3s ease;
+        }
+
+        .controls button:hover {
+            background: #4f46e5;
+            transform: translateY(-3px);
+            box-shadow: var(--shadow);
+        }
+
+        .controls button:disabled {
+            background: #d1d5db;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        #next-question-btn {
+            display: none;
+        }
+
+        .footer {
+            margin-top: 30px;
+            font-size: 0.9em;
+            color: #6b7280;
+            font-weight: 500;
+        }
+
+        @media (min-width: 768px) {
+            .container { padding: 40px; }
+            h1 { font-size: 3em; }
+            .instructions { font-size: 1.25em; }
+            #grid-container { max-width: 550px; }
+            .question-content input { width: 200px; }
+        }
+    </style>
+    <script src="scorm_api.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h1>Osman Bey'in Bahçesi</h1>
+        <div class="instructions">
+            <p id="story-text">Osman Bey, kareli zemin şeklindeki bahçesine çiçek ekmek istiyor. Alanı <strong>12 birim kare</strong> olan ve kenarları doğal sayı olan dikdörtgen şeklinde bir alanı seçmek istiyor.</p>
+            <p id="question-text"><strong>1. Soru:</strong> Osman Bey'in en az miktarda tel kullanması için oluşturması gereken dikdörtgeni kareli zeminde seçin.</p>
+        </div>
+
+        <div id="grid-container" style="display: grid;">
+            <!-- Grid hücreleri aynı kalıyor -->
+            <div class="grid-cell" data-index="0"></div><div class="grid-cell" data-index="1"></div><div class="grid-cell" data-index="2"></div><div class="grid-cell" data-index="3"></div><div class="grid-cell" data-index="4"></div><div class="grid-cell" data-index="5"></div><div class="grid-cell" data-index="6"></div><div class="grid-cell" data-index="7"></div><div class="grid-cell" data-index="8"></div><div class="grid-cell" data-index="9"></div><div class="grid-cell" data-index="10"></div><div class="grid-cell" data-index="11"></div><div class="grid-cell" data-index="12"></div><div class="grid-cell" data-index="13"></div><div class="grid-cell" data-index="14"></div><div class="grid-cell" data-index="15"></div><div class="grid-cell" data-index="16"></div><div class="grid-cell" data-index="17"></div><div class="grid-cell" data-index="18"></div><div class="grid-cell" data-index="19"></div><div class="grid-cell" data-index="20"></div><div class="grid-cell" data-index="21"></div><div class="grid-cell" data-index="22"></div><div class="grid-cell" data-index="23"></div><div class="grid-cell" data-index="24"></div><div class="grid-cell" data-index="25"></div><div class="grid-cell" data-index="26"></div><div class="grid-cell" data-index="27"></div><div class="grid-cell" data-index="28"></div><div class="grid-cell" data-index="29"></div><div class="grid-cell" data-index="30"></div><div class="grid-cell" data-index="31"></div><div class="grid-cell" data-index="32"></div><div class="grid-cell" data-index="33"></div><div class="grid-cell" data-index="34"></div><div class="grid-cell" data-index="35"></div><div class="grid-cell" data-index="36"></div><div class="grid-cell" data-index="37"></div><div class="grid-cell" data-index="38"></div><div class="grid-cell" data-index="39"></div><div class="grid-cell" data-index="40"></div><div class="grid-cell" data-index="41"></div><div class="grid-cell" data-index="42"></div><div class="grid-cell" data-index="43"></div><div class="grid-cell" data-index="44"></div><div class="grid-cell" data-index="45"></div><div class="grid-cell" data-index="46"></div><div class="grid-cell" data-index="47"></div><div class="grid-cell" data-index="48"></div><div class="grid-cell" data-index="49"></div><div class="grid-cell" data-index="50"></div><div class="grid-cell" data-index="51"></div><div class="grid-cell" data-index="52"></div><div class="grid-cell" data-index="53"></div><div class="grid-cell" data-index="54"></div><div class="grid-cell" data-index="55"></div><div class="grid-cell" data-index="56"></div><div class="grid-cell" data-index="57"></div><div class="grid-cell" data-index="58"></div><div class="grid-cell" data-index="59"></div><div class="grid-cell" data-index="60"></div><div class="grid-cell" data-index="61"></div><div class="grid-cell" data-index="62"></div><div class="grid-cell" data-index="63"></div><div class="grid-cell" data-index="64"></div><div class="grid-cell" data-index="65"></div><div class="grid-cell" data-index="66"></div><div class="grid-cell" data-index="67"></div><div class="grid-cell" data-index="68"></div><div class="grid-cell" data-index="69"></div><div class="grid-cell" data-index="70"></div><div class="grid-cell" data-index="71"></div><div class="grid-cell" data-index="72"></div><div class="grid-cell" data-index="73"></div><div class="grid-cell" data-index="74"></div><div class="grid-cell" data-index="75"></div><div class="grid-cell" data-index="76"></div><div class="grid-cell" data-index="77"></div><div class="grid-cell" data-index="78"></div><div class="grid-cell" data-index="79"></div><div class="grid-cell" data-index="80"></div><div class="grid-cell" data-index="81"></div><div class="grid-cell" data-index="82"></div><div class="grid-cell" data-index="83"></div><div class="grid-cell" data-index="84"></div><div class="grid-cell" data-index="85"></div><div class="grid-cell" data-index="86"></div><div class="grid-cell" data-index="87"></div><div class="grid-cell" data-index="88"></div><div class="grid-cell" data-index="89"></div><div class="grid-cell" data-index="90"></div><div class="grid-cell" data-index="91"></div><div class="grid-cell" data-index="92"></div><div class="grid-cell" data-index="93"></div><div class="grid-cell" data-index="94"></div><div class="grid-cell" data-index="95"></div><div class="grid-cell" data-index="96"></div><div class="grid-cell" data-index="97"></div><div class="grid-cell" data-index="98"></div><div class="grid-cell" data-index="99"></div><div class="grid-cell" data-index="100"></div><div class="grid-cell" data-index="101"></div><div class="grid-cell" data-index="102"></div><div class="grid-cell" data-index="103"></div><div class="grid-cell" data-index="104"></div><div class="grid-cell" data-index="105"></div><div class="grid-cell" data-index="106"></div><div class="grid-cell" data-index="107"></div><div class="grid-cell" data-index="108"></div><div class="grid-cell" data-index="109"></div><div class="grid-cell" data-index="110"></div><div class="grid-cell" data-index="111"></div><div class="grid-cell" data-index="112"></div><div class="grid-cell" data-index="113"></div><div class="grid-cell" data-index="114"></div><div class="grid-cell" data-index="115"></div><div class="grid-cell" data-index="116"></div><div class="grid-cell" data-index="117"></div><div class="grid-cell" data-index="118"></div><div class="grid-cell" data-index="119"></div><div class="grid-cell" data-index="120"></div><div class="grid-cell" data-index="121"></div><div class="grid-cell" data-index="122"></div><div class="grid-cell" data-index="123"></div><div class="grid-cell" data-index="124"></div><div class="grid-cell" data-index="125"></div><div class="grid-cell" data-index="126"></div><div class="grid-cell" data-index="127"></div><div class="grid-cell" data-index="128"></div><div class="grid-cell" data-index="129"></div><div class="grid-cell" data-index="130"></div><div class="grid-cell" data-index="131"></div><div class="grid-cell" data-index="132"></div><div class="grid-cell" data-index="133"></div><div class="grid-cell" data-index="134"></div><div class="grid-cell" data-index="135"></div><div class="grid-cell" data-index="136"></div><div class="grid-cell" data-index="137"></div><div class="grid-cell" data-index="138"></div><div class="grid-cell" data-index="139"></div><div class="grid-cell" data-index="140"></div><div class="grid-cell" data-index="141"></div><div class="grid-cell" data-index="142"></div><div class="grid-cell" data-index="143"></div><div class="grid-cell" data-index="144"></div><div class="grid-cell" data-index="145"></div><div class="grid-cell" data-index="146"></div><div class="grid-cell" data-index="147"></div><div class="grid-cell" data-index="148"></div><div class="grid-cell" data-index="149"></div><div class="grid-cell" data-index="150"></div><div class="grid-cell" data-index="151"></div><div class="grid-cell" data-index="152"></div><div class="grid-cell" data-index="153"></div><div class="grid-cell" data-index="154"></div><div class="grid-cell" data-index="155"></div><div class="grid-cell" data-index="156"></div><div class="grid-cell" data-index="157"></div><div class="grid-cell" data-index="158"></div><div class="grid-cell" data-index="159"></div><div class="grid-cell" data-index="160"></div><div class="grid-cell" data-index="161"></div><div class="grid-cell" data-index="162"></div><div class="grid-cell" data-index="163"></div><div class="grid-cell" data-index="164"></div><div class="grid-cell" data-index="165"></div><div class="grid-cell" data-index="166"></div><div class="grid-cell" data-index="167"></div><div class="grid-cell" data-index="168"></div>
+        </div>
+
+        <div class="question-content" id="numeric-content" style="display: none;">
+            <input type="number" id="answer-input" placeholder="Cevabınızı girin">
+        </div>
+
+        <div class="feedback" id="feedback-box"></div>
+
+        <div class="controls">
+            <button id="check-answer-btn">Cevabı Kontrol Et</button>
+            <button id="next-question-btn" style="display: none;">Sonraki Soru</button>
+        </div>
+
+        <div class="footer">
+            Hazırlayan: Osman AYDOĞDU
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const gridContainer = document.getElementById('grid-container');
+            const questionText = document.getElementById('question-text');
+            const feedbackBox = document.getElementById('feedback-box');
+            const checkBtn = document.getElementById('check-answer-btn');
+            const nextBtn = document.getElementById('next-question-btn');
+            const numericContent = document.getElementById('numeric-content');
+            const answerInput = document.getElementById('answer-input');
+
+            const gridSize = 13;
+            let currentQuestion = 1;
+            let cells = [];
+            let isDrawing = false;
+            let selectedCells = new Set();
+            let startCell = null;
+            let endCell = null;
+
+            const questions = [
+                {
+                    type: 'grid',
+                    question: "<strong>1. Soru:</strong> Osman Bey'in en az miktarda tel kullanması için oluşturması gereken dikdörtgeni kareli zeminde seçin.",
+                    correctPerimeter: 14,
+                    feedbackHint: "Daha az tel kullanabileceğiniz bir seçenek var. Denemeye devam edin.",
+                    check: () => checkGridSelection()
+                },
+                {
+                    type: 'numeric',
+                    question: "<strong>2. Soru:</strong> Harika! En verimli dikdörtgeni buldunuz. Telin birim uzunluk fiyatı <strong>20 TL</strong> olduğuna göre, Osman Bey bu iş için en az kaç TL öder?",
+                    correctAnswer: 280,
+                    check: () => checkNumericAnswer()
+                },
+                {
+                    type: 'grid',
+                    question: "<strong>3. Soru:</strong> Şimdi de Osman Bey'in bir sıra tel çekmek koşuluyla en fazla teli kullanarak çevirebileceği, alanı 12 birim kare olan dikdörtgeni seçin.",
+                    correctPerimeter: 26,
+                    feedbackHint: "Daha fazla tel kullanabileceğiniz bir seçenek var. Çarpanları düşünün.",
+                    check: () => checkGridSelection()
+                },
+                {
+                    type: 'numeric',
+                    question: "<strong>4. Soru:</strong> Çok güzel! Telin birim uzunluk fiyatı 20 TL olduğuna göre, tel için en fazla kaç TL ödemesi gerekir?",
+                    correctAnswer: 520,
+                    check: () => checkNumericAnswer()
+                }
+            ];
+
+            function setupGrid() {
+                gridContainer.innerHTML = '';
+                cells = [];
+                for (let i = 0; i < gridSize * gridSize; i++) {
+                    const cell = document.createElement('div');
+                    cell.classList.add('grid-cell');
+                    cell.dataset.index = i;
+                    gridContainer.appendChild(cell);
+                    cells.push(cell);
+                }
+            }
+
+            function getCellFromEvent(e) {
+                const target = e.type.startsWith('touch') ? document.elementFromPoint(e.touches[0].clientX, e.touches[0].clientY) : e.target;
+                return target && target.classList.contains('grid-cell') ? target : null;
+            }
+
+            function handleInteractionStart(e) {
+                isDrawing = true;
+                clearSelection();
+                const cell = getCellFromEvent(e);
+                if (cell) startCell = getCoordsFromIndex(parseInt(cell.dataset.index));
+                e.preventDefault();
+            }
+
+            function handleInteractionMove(e) {
+                if (!isDrawing) return;
+                const cell = getCellFromEvent(e);
+                if (cell) {
+                    endCell = getCoordsFromIndex(parseInt(cell.dataset.index));
+                    drawRectangle();
+                }
+                e.preventDefault();
+            }
+
+            function handleInteractionEnd(e) {
+                if (isDrawing) {
+                    isDrawing = false;
+                    e.preventDefault();
+                }
+            }
+
+            function getCoordsFromIndex(index) { return { row: Math.floor(index / gridSize), col: index % gridSize }; }
+            function getIndexFromCoords(row, col) { return row * gridSize + col; }
+            function clearSelection() {
+                selectedCells.forEach(cell => cell.classList.remove('selected'));
+                selectedCells.clear();
+                startCell = null;
+                endCell = null;
+            }
+
+            function drawRectangle() {
+                if (!startCell || !endCell) return;
+                selectedCells.forEach(cell => cell.classList.remove('selected'));
+                selectedCells.clear();
+                const minRow = Math.min(startCell.row, endCell.row), maxRow = Math.max(startCell.row, endCell.row);
+                const minCol = Math.min(startCell.col, endCell.col), maxCol = Math.max(startCell.col, endCell.col);
+                for (let r = minRow; r <= maxRow; r++) {
+                    for (let c = minCol; c <= maxCol; c++) {
+                        const cell = cells[getIndexFromCoords(r, c)];
+                        cell.classList.add('selected');
+                        selectedCells.add(cell);
+                    }
+                }
+            }
+
+            function getSelectionDimensions() {
+                if (selectedCells.size === 0) return { width: 0, height: 0, area: 0, perimeter: 0 };
+                let minRow = gridSize, maxRow = -1, minCol = gridSize, maxCol = -1;
+                selectedCells.forEach(cell => {
+                    const coords = getCoordsFromIndex(parseInt(cell.dataset.index));
+                    minRow = Math.min(minRow, coords.row); maxRow = Math.max(maxRow, coords.row);
+                    minCol = Math.min(minCol, coords.col); maxCol = Math.max(maxCol, coords.col);
+                });
+                const width = maxCol - minCol + 1;
+                const height = maxRow - minRow + 1;
+                return { width, height, area: width * height, perimeter: 2 * (width + height) };
+            }
+
+            function checkGridSelection() {
+                const dims = getSelectionDimensions();
+                const current = questions[currentQuestion - 1];
+
+                if (dims.area !== 12) {
+                    showFeedback(`Seçtiğiniz alan ${dims.area} birim kare. Lütfen 12 birim karelik bir alan seçin.`, 'error');
+                    return false;
+                }
+
+                if (dims.perimeter === current.correctPerimeter) {
+                    showFeedback(`Tebrikler! ${dims.height}x${dims.width} boyutlarındaki bu dikdörtgenin çevresi ${dims.perimeter} birimdir ve bu, aradığımız cevaptır.`, 'success');
+                    return true;
+                } else {
+                    showFeedback(`Bu dikdörtgenin çevresi ${dims.perimeter} birim. ${current.feedbackHint}`, 'error');
+                    return false;
+                }
+            }
+
+            function checkNumericAnswer() {
+                const userAnswer = parseInt(answerInput.value);
+                const current = questions[currentQuestion - 1];
+                if (isNaN(userAnswer)) {
+                    showFeedback('Lütfen geçerli bir sayı girin.', 'error');
+                    return false;
+                }
+                if (userAnswer === current.correctAnswer) {
+                    showFeedback('Doğru cevap! Harika gidiyorsun.', 'success');
+                    return true;
+                } else {
+                    showFeedback('Cevabınız doğru değil. Lütfen tekrar hesaplayın.', 'error');
+                    return false;
+                }
+            }
+
+            function showFeedback(message, type) {
+                feedbackBox.textContent = message;
+                feedbackBox.className = `feedback ${type}`;
+            }
+
+            function updateUIForQuestion() {
+                const current = questions[currentQuestion - 1];
+                questionText.innerHTML = current.question;
+                feedbackBox.innerHTML = '';
+                feedbackBox.className = 'feedback';
+                checkBtn.disabled = false;
+                nextBtn.style.display = 'none';
+
+                if (current.type === 'grid') {
+                    gridContainer.style.display = 'grid';
+                    numericContent.style.display = 'none';
+                    clearSelection();
+                } else {
+                    gridContainer.style.display = 'none';
+                    numericContent.style.display = 'block';
+                    answerInput.value = '';
+                    answerInput.focus();
+                }
+            }
+
+            checkBtn.addEventListener('click', () => {
+                const isCorrect = questions[currentQuestion - 1].check();
+                if (isCorrect) {
+                    checkBtn.disabled = true;
+                    if (currentQuestion < questions.length) {
+                        nextBtn.style.display = 'inline-block';
+                    } else {
+                        document.getElementById('story-text').style.display = 'none';
+                        questionText.innerHTML = "🎉 Etkinlik Bitti, Tebrikler! 🎉";
+                        gridContainer.style.display = 'none';
+                        numericContent.style.display = 'none';
+                        checkBtn.style.display = 'none';
+                        feedbackBox.className = 'feedback success';
+                        feedbackBox.textContent = 'Tüm soruları başarıyla tamamladınız!';
+                    }
+                }
+            });
+
+            nextBtn.addEventListener('click', () => {
+                currentQuestion++;
+                updateUIForQuestion();
+            });
+
+            gridContainer.addEventListener('mousedown', handleInteractionStart);
+            gridContainer.addEventListener('mousemove', handleInteractionMove);
+            document.addEventListener('mouseup', handleInteractionEnd);
+            gridContainer.addEventListener('touchstart', handleInteractionStart, { passive: false });
+            gridContainer.addEventListener('touchmove', handleInteractionMove, { passive: false });
+            document.addEventListener('touchend', handleInteractionEnd);
+
+            // Başlat
+            setupGrid();
+            updateUIForQuestion();
+        });
+    </script>
+</body>
+</html>

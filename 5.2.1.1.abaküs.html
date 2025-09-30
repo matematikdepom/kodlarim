@@ -1,0 +1,283 @@
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Abaküs Etkinliği</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;700&display=swap');
+        :root {
+            --abacus-wood: #4A2C2A; /* Zengin koyu kahverengi */
+            --abacus-bg: #F5F5F5; /* Açık nötr gri */
+            --rod-color: #A1887F; /* Yumuşak taupe */
+            --main-text: #1E88E5; /* Canlı mavi */
+            --feedback-good: #43A047; /* Taze yeşil */
+            --feedback-bad: #E53935; /* Parlak kırmızı */
+            --button-go: #1976D2; /* Derin mavi */
+            --button-new: #F57C00; /* Sıcak turuncu */
+        }
+        body {
+            font-family: 'Nunito', sans-serif; 
+            background-color: #E3F2FD; /* Açık mavi arka plan */
+            color: #212121; 
+            text-align: center;
+            margin: 0; 
+            padding: 20px 10px;
+            -webkit-user-select: none; 
+            user-select: none; 
+            -webkit-tap-highlight-color: transparent;
+        }
+        .container {
+            width: 100%; 
+            max-width: 900px; 
+            margin: auto;
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            gap: 15px;
+        }
+        .hidden { display: none !important; }
+        #abacus-wrapper {
+            width: 100%;
+            overflow-x: auto;
+            padding-bottom: 10px;
+        }
+        #abacus-container {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            min-width: 550px;
+            background-color: var(--abacus-bg);
+            border: 10px solid var(--abacus-wood);
+            border-radius: 10px;
+            padding: 15px;
+            box-sizing: border-box;
+        }
+        .rod-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            flex: 1;
+        }
+        .rod {
+            width: 100%;
+            height: 350px;
+            position: relative;
+            background-image: linear-gradient(var(--rod-color), var(--rod-color));
+            background-repeat: no-repeat;
+            background-size: clamp(4px, 1vw, 6px) 100%;
+            background-position: center bottom;
+            display: flex;
+            flex-direction: column-reverse;
+            align-items: center;
+        }
+        .bead {
+            width: clamp(24px, 90%, 32px);
+            aspect-ratio: 1 / 1;
+            border-radius: 50%;
+            flex-shrink: 0;
+            margin-bottom: 0;
+            cursor: pointer;
+            border: 1px solid rgba(0,0,0,0.4);
+            box-shadow: inset 0 -2px 3px rgba(0,0,0,0.3);
+            transition: transform 0.2s ease-out;
+        }
+        .bead[data-active='false'] { transform: translateY(-110%); }
+        .value-box {
+            width: clamp(30px, 80%, 38px);
+            aspect-ratio: 1/1;
+            background-color: white;
+            border: 2px solid var(--rod-color);
+            border-radius: 8px;
+            font-weight: 700;
+            margin-top: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: clamp(16px, 3vw, 18px);
+        }
+        .label {
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: bold;
+            color: #333;
+            margin-top: 5px;
+            line-height: 1.1;
+            white-space: normal;
+        }
+        .instructions {
+            text-align: left;
+            display: inline-block;
+            margin-bottom: 20px;
+            background-color: #fff;
+            padding: 15px 25px;
+            border-radius: 10px;
+            border: 2px dashed var(--main-text);
+        }
+        .instructions h3 { margin-top: 0; color: var(--main-text); }
+        .instructions li { margin-bottom: 8px; }
+        .color-0{background-color:#0288D1} /* Açık mavi */
+        .color-1{background-color:#FBC02D} /* Sarı */
+        .color-2{background-color:#7CB342} /* Yeşil */
+        .color-3{background-color:#D81B60} /* Pembe */
+        .color-4{background-color:#8E24AA} /* Mor */
+        .color-5{background-color:#FF5722} /* Turuncu */
+        .color-6{background-color:#00838F} /* Camgöbeği */
+        .color-7{background-color:#3949AB} /* Koyu mavi */
+        .color-8{background-color:#455A64} /* Koyu gri */
+        #button-container { display: flex; gap: 15px; }
+        #check-button, #new-task-button, .launch-button { 
+            padding: 12px 25px; 
+            border: none; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            font-size: clamp(14px, 3vw, 16px); 
+            color: white; 
+            font-weight: 700; 
+        }
+        .launch-button { background-color: var(--button-go); font-size: 1.2em !important; }
+        #check-button { background-color: var(--button-go); }
+        #new-task-button { background-color: var(--button-new); }
+        #task-board {width: 100%; max-width: 550px;}
+        h1,h2,p { margin: 0; }
+        .credit { 
+            font-size: 14px; 
+            color: var(--main-text); 
+            margin-top: 10px; 
+            font-weight: 600; 
+        }
+    </style>
+    <script src="scorm_api.js"></script>
+</head>
+<body>
+    <div id="launch-container" class="container">
+        <div class="instructions">
+            <h3>Abaküs Etkinliği</h3>
+            <ul>
+                <li>Boncuklara tıklayarak onları aşağı indirebilirsin.</li>
+                <li>Çubuğun alt kısmındaki boncuk sayısı, ilgili kutucukta görüntülenir.</li>
+                <li>Verilen sayıyı abaküs üzerinde oluşturduktan sonra "Kontrol Et" butonuna tıklamalısın.</li>
+                <li>Yeni bir sayı istersen "Yeni Görev" butonunu kullanabilirsin.</li>
+            </ul>
+        </div>
+        <button id="launch-button" class="launch-button">Başla!</button>
+        <div class="credit">Hazırlayan: Osman Aydoğdu</div>
+    </div>
+    <div id="activity-container" class="container hidden">
+        <div id="task-board">
+            <h2>Haydi, <strong><span id="target-number-text"></span></strong> sayısını abaküs üzerinde gösterelim.</h2>
+        </div>
+        <div id="abacus-wrapper"> <div id="abacus-container"></div> </div>
+        <div id="button-container">
+            <button id="check-button">Kontrol Et</button>
+            <button id="new-task-button">Yeni Görev</button>
+        </div>
+        <div id="feedback" style="min-height: 25px; font-weight: 700;"></div>
+    </div>
+   
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const launchContainer = document.getElementById('launch-container');
+            const activityContainer = document.getElementById('activity-container');
+            const launchButton = document.getElementById('launch-button');
+            const abacus = document.getElementById('abacus-container');
+            const feedback = document.getElementById('feedback');
+            const checkButton = document.getElementById('check-button');
+            const newTaskButton = document.getElementById('new-task-button');
+            const targetNumberText = document.getElementById('target-number-text');
+           
+            let targetNumberStr;
+            const numbers = [
+                102101230, 220310104, 300400121, 580217436, 368045192,
+                703512648, 987654321, 809716534, 789789789
+            ];
+            const placeValues = [ 'Yüz Milyonlar', 'On Milyonlar', 'Milyonlar', 'Yüz Binler', 'On Binler', 'Binler', 'Yüzler', 'Onlar', 'Birler' ];
+           
+            function gameInit() {
+                generateNewTask();
+            }
+            function generateNewTask() {
+                feedback.textContent = '';
+                checkButton.disabled = false;
+                const randomIndex = Math.floor(Math.random() * numbers.length);
+                targetNumberStr = numbers[randomIndex].toString().padStart(9, '0');
+               
+                const numberToDisplay = parseInt(targetNumberStr, 10).toString();
+                targetNumberText.textContent = numberToDisplay.replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+                setupAbacus();
+            }
+           
+            function setupAbacus() {
+                abacus.innerHTML = '';
+                for (let i = 0; i < 9; i++) {
+                    const rodWrapper = document.createElement('div'); rodWrapper.className = 'rod-wrapper';
+                    const rod = document.createElement('div'); rod.className = 'rod'; rod.dataset.rodIndex = i; rod.dataset.value = 0;
+                   
+                    for (let j = 1; j <= 9; j++) {
+                        const bead = document.createElement('div');
+                        bead.className = `bead color-${i}`;
+                        bead.dataset.position = j;
+                        bead.addEventListener('click', handleBeadClick, { passive: true });
+                        rod.appendChild(bead);
+                    }
+                   
+                    const valueBox = document.createElement('div'); valueBox.className = 'value-box';
+                    const label = document.createElement('div'); label.className = 'label';
+                    label.textContent = placeValues[i];
+                   
+                    rodWrapper.appendChild(rod);
+                    rodWrapper.appendChild(valueBox);
+                    rodWrapper.appendChild(label);
+                    abacus.appendChild(rodWrapper);
+                   
+                    updateRodVisuals(rod);
+                }
+            }
+           
+            function handleBeadClick(e) {
+                const rod = e.currentTarget.closest('.rod');
+                if (checkButton.disabled) return;
+                const clickedPosition = parseInt(e.currentTarget.dataset.position, 10);
+                const currentValue = parseInt(rod.dataset.value, 10);
+                rod.dataset.value = (clickedPosition === currentValue) ? clickedPosition - 1 : clickedPosition;
+                updateRodVisuals(rod);
+            }
+           
+            function updateRodVisuals(rod) {
+                const rodValue = parseInt(rod.dataset.value, 10);
+                rod.querySelectorAll('.bead').forEach(bead => {
+                    bead.dataset.active = (parseInt(bead.dataset.position, 10) <= rodValue);
+                });
+                const rodWrapper = rod.parentElement;
+                rodWrapper.querySelector('.value-box').textContent = rodValue;
+            }
+           
+            function checkAnswer() {
+                let currentNumberStr = '';
+                for (let i = 0; i < 9; i++) { currentNumberStr += abacus.querySelector(`.rod[data-rod-index='${i}']`).dataset.value; }
+                if (currentNumberStr === targetNumberStr) {
+                    feedback.textContent = "✔ Harika! Tam olarak doğru.";
+                    feedback.style.color = 'var(--feedback-good)';
+                    checkButton.disabled = true;
+                    setTimeout(generateNewTask, 2000);
+                } else {
+                    const builtNum = parseInt(currentNumberStr, 10).toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+                    feedback.innerHTML = `❌ Senin sayın: ${builtNum}. Tekrar dene.`;
+                    feedback.style.color = 'var(--feedback-bad)';
+                }
+            }
+            launchButton.addEventListener('click', () => {
+                launchContainer.classList.add('hidden');
+                activityContainer.classList.remove('hidden');
+                gameInit();
+            });
+            newTaskButton.addEventListener('click', () => {
+                generateNewTask();
+            });
+            checkButton.addEventListener('click', checkAnswer);
+        });
+    </script>
+</body>
+</html>

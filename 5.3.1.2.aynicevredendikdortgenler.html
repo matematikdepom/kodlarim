@@ -1,0 +1,795 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dinamik Dikdörtgen Çizme Etkinliği</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --main-bg-color: #f8fafc;
+            --grid-bg-color: #ffffff;
+            --grid-line-color: #e2e8f0;
+            --selection-color: #3b82f6;
+            --result-color: #10b981;
+            --font-color: #1e293b;
+            --error-color: #ef4444;
+            --cell-size: 25px;
+            --grid-size: 20;
+        }
+
+        #app-container {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--main-bg-color);
+            color: var(--font-color);
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.5s ease 0.2s;
+        }
+
+        #app-container.visible {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        /* Modal Stilleri */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(15, 23, 42, 0.9);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+            opacity: 1;
+            visibility: visible;
+            transition: opacity 0.4s ease, visibility 0.4s ease;
+        }
+
+        .modal-overlay.hidden {
+            opacity: 0;
+            visibility: hidden;
+        }
+
+        .modal-content {
+            background-color: #ffffff;
+            padding: 30px;
+            border-radius: 16px;
+            max-width: 600px;
+            width: 90%;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+            text-align: left;
+            transform: scale(1);
+            transition: transform 0.4s ease;
+            position: relative;
+        }
+
+        .modal-overlay.hidden .modal-content {
+            transform: scale(0.9);
+        }
+
+        .modal-content h2 {
+            color: var(--selection-color);
+            font-size: 1.8em;
+            margin: 0 0 15px;
+            border-bottom: 2px solid #e5e7eb;
+            padding-bottom: 10px;
+        }
+
+        .modal-content ul {
+            padding-left: 20px;
+            line-height: 1.8;
+            font-size: 1.1em;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+            justify-content: center;
+        }
+
+        .modal-buttons button {
+            flex: 1;
+            padding: 12px;
+            font-size: 1.1em;
+            font-weight: 600;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.2s;
+        }
+
+        #start-button,
+        #restart-button {
+            background-color: var(--result-color);
+            color: #ffffff;
+        }
+
+        #close-modal-button {
+            background-color: #6b7280;
+            color: #ffffff;
+        }
+
+        .modal-buttons button:hover {
+            transform: translateY(-2px);
+            filter: brightness(1.1);
+        }
+
+        /* Uygulama Ana Stilleri */
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            color: var(--selection-color);
+            font-size: 2em;
+            font-weight: 700;
+        }
+
+        #perimeter-info,
+        #goal-info {
+            font-size: 1.3em;
+            font-weight: 600;
+            margin: 10px 0;
+        }
+
+        #goal-info {
+            color: var(--error-color);
+        }
+
+        .main-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 40px;
+            justify-content: center;
+            width: 100%;
+            max-width: 1200px;
+        }
+
+        #grid-container {
+            display: grid;
+            grid-template-columns: repeat(var(--grid-size), var(--cell-size));
+            grid-template-rows: repeat(var(--grid-size), var(--cell-size));
+            border: 2px solid var(--font-color);
+            background-color: var(--grid-bg-color);
+            cursor: crosshair;
+            user-select: none;
+            touch-action: none;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .grid-cell {
+            width: var(--cell-size);
+            height: var(--cell-size);
+            border: 1px solid var(--grid-line-color);
+            box-sizing: border-box;
+            transition: background-color 0.2s;
+        }
+
+        .grid-cell.preview {
+            background-color: var(--selection-color);
+            opacity: 0.6;
+        }
+
+        /* Sonuç Alanı */
+        #results-area {
+            width: 350px;
+            text-align: center;
+            position: relative;
+        }
+
+        #slider-viewport {
+            width: 100%;
+            height: 450px;
+            overflow: hidden;
+            border: 2px dashed var(--selection-color);
+            background-color: #f9fafb;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        #results-container {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px 0;
+            gap: 20px;
+            transition: transform 0.5s ease-in-out;
+        }
+
+        .result-rectangle {
+            position: relative;
+            background: linear-gradient(135deg, var(--result-color), #34d399);
+            border: 2px solid #047857;
+            box-sizing: border-box;
+            flex-shrink: 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .slider-nav {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(31, 41, 55, 0.7);
+            color: #ffffff;
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            font-size: 20px;
+            font-weight: 600;
+            cursor: pointer;
+            z-index: 10;
+            display: none;
+            transition: background-color 0.3s;
+        }
+
+        .slider-nav:hover {
+            background-color: rgba(31, 41, 55, 0.9);
+        }
+
+        .slider-nav.disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        #prevBtn {
+            top: 10px;
+        }
+
+        #nextBtn {
+            bottom: 10px;
+            top: auto;
+        }
+
+        .side-label {
+            position: absolute;
+            background-color: rgba(255, 255, 255, 0.9);
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--font-color);
+            white-space: nowrap;
+        }
+
+        .label-bottom {
+            bottom: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .label-right {
+            top: 50%;
+            right: -40px;
+            transform: translateY(-50%);
+        }
+
+        /* Kontrol Butonları */
+        .controls {
+            margin-top: 20px;
+            display: flex;
+            gap: 15px;
+        }
+
+        .controls button {
+            padding: 12px 24px;
+            font-size: 1.1em;
+            font-weight: 600;
+            border: none;
+            border-radius: 8px;
+            background-color: var(--selection-color);
+            color: #ffffff;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.2s;
+        }
+
+        .controls button:hover {
+            background-color: #2563eb;
+            transform: translateY(-2px);
+        }
+
+        /* Tooltip */
+        #dimension-tooltip {
+            position: absolute;
+            display: none;
+            background-color: rgba(31, 41, 55, 0.8);
+            color: #ffffff;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 0.9em;
+            pointer-events: none;
+            z-index: 1000;
+            text-align: left;
+        }
+
+        /* Bildirim (Toast) */
+        #toast-notification {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: var(--error-color);
+            color: #ffffff;
+            padding: 12px 30px;
+            border-radius: 8px;
+            z-index: 10001;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.5s, visibility 0.5s, bottom 0.5s;
+            font-weight: 600;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        #toast-notification.show {
+            opacity: 1;
+            visibility: visible;
+            bottom: 40px;
+        }
+
+        /* Oryantasyon Uyarısı */
+        #orientation-warning {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #1e293b;
+            color: #ffffff;
+            z-index: 9999;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 20px;
+        }
+
+        #orientation-warning p {
+            font-size: 1.3em;
+            margin-top: 20px;
+            max-width: 400px;
+        }
+
+        #orientation-warning svg {
+            width: 80px;
+            height: 80px;
+            fill: #ffffff;
+            animation: rotate-animation 2s infinite ease-in-out;
+        }
+
+        @keyframes rotate-animation {
+            0% { transform: rotate(0deg); }
+            50% { transform: rotate(-90deg); }
+            100% { transform: rotate(-90deg); }
+        }
+
+        /* Hazırlayan Bilgisi */
+        .footer-credit {
+            margin-top: 20px;
+            font-size: 0.9em;
+            color: #6b7280;
+            font-weight: 500;
+            text-align: center;
+        }
+
+        /* Responsive Tasarım */
+        @media screen and (max-height: 800px) and (orientation: portrait) {
+            #app-container,
+            .modal-overlay {
+                display: none;
+            }
+
+            #orientation-warning {
+                display: flex;
+            }
+        }
+
+        @media (max-width: 950px) {
+            .main-container {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            #results-area {
+                width: 90%;
+                margin-top: 30px;
+            }
+
+            #slider-viewport {
+                width: 100%;
+            }
+
+            #nextBtn {
+                right: 50%;
+                transform: translateX(50%);
+                bottom: 10px;
+            }
+
+            #prevBtn {
+                left: 50%;
+                transform: translateX(-50%);
+                top: 10px;
+            }
+        }
+
+        @media (max-width: 550px) {
+            :root {
+                --cell-size: 20px;
+            }
+
+            #app-container {
+                padding: 10px;
+            }
+
+            h1 {
+                font-size: 1.6em;
+            }
+
+            .modal-content {
+                padding: 20px;
+            }
+        }
+    </style>
+    <script src="scorm_api.js"></script>
+</head>
+<body>
+    <div id="instruction-modal" class="modal-overlay">
+        <div class="modal-content">
+            <h2>Etkinliğe Hoş Geldin!</h2>
+            <p>Amacın, sana verilen <strong>"Hedef Çevre Uzunluğu"</strong>na sahip bütün dikdörtgenleri bulmak. Şekildeki kareli zeminde her karenin bir kenar uzunluğu bir birimdir.</p>
+            <ul>
+                <li>Kareli zemine <strong>fareyle veya parmağınla basılı tutarak</strong> bir dikdörtgen çiz.</li>
+                <li>Çizim yaparken, anlık olarak <strong>kısa ve uzun kenar bilgilerini</strong> göreceksin.</li>
+                <li>Eğer çizdiğin dikdörtgenin çevresi hedefe uyuyorsa, sağdaki <strong>sonuç galerisine</strong> eklenecektir.</li>
+                <li>Başlıkta yazan <strong>hedef sayısını</strong> tamamlayana kadar farklı dikdörtgenler bulmaya çalış!</li>
+            </ul>
+            <div class="modal-buttons">
+                <button id="start-button">Etkinliğe Başla!</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="completion-modal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <h2>Harika İş Çıkardın!</h2>
+            <p>Tebrikler! Bu çevre uzunluğuna sahip olan tüm dikdörtgenleri başarıyla buldun.</p>
+            <p><strong>Yeni bir çevre değeri ile etkinliğe devam etmek ister misin?</strong></p>
+            <div class="modal-buttons">
+                <button id="restart-button">Evet, Yeni Etkinlik</button>
+                <button id="close-modal-button">Hayır, Kalsın</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="app-container">
+        <header>
+            <h1>Dikdörtgen Çizme Etkinliği</h1>
+            <p id="perimeter-info">Hedef Çevre Uzunluğu: 26 birim</p>
+            <p id="goal-info">Hedef: 0 / 6 dikdörtgen bulundu.</p>
+        </header>
+        <div class="main-container">
+            <div id="grid-container">
+                <!-- Izgara hücreleri aynı şekilde dinamik olarak oluşturulacak -->
+            </div>
+            <div id="results-area">
+                <h3>Bulunan Dikdörtgenler</h3>
+                <div id="slider-viewport">
+                    <div id="results-container" style="transform: translateY(0px);"></div>
+                </div>
+                <button id="prevBtn" class="slider-nav" style="display: none;">▲</button>
+                <button id="nextBtn" class="slider-nav" style="display: none;">▼</button>
+            </div>
+        </div>
+        <div class="controls">
+            <button id="newPerimeterBtn">Yeni Çevre Değeri</button>
+            <button id="clearBtn">Sonuçları Temizle</button>
+        </div>
+        <div class="footer-credit">Hazırlayan: Osman AYDOĞDU</div>
+    </div>
+
+    <div id="dimension-tooltip"></div>
+    <div id="orientation-warning">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path fill="currentColor" d="M20 3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-1 16H5V5h14v14z"/>
+        </svg>
+        <p>En iyi deneyim için lütfen cihazınızı yatay konuma getirin.</p>
+    </div>
+    <div id="toast-notification"></div>
+
+    <script>
+        // JavaScript kısmı değişmedi, orijinal kod aynı şekilde kullanılabilir
+        document.addEventListener('DOMContentLoaded', () => {
+            const appContainer = document.getElementById('app-container');
+            const instructionModal = document.getElementById('instruction-modal');
+            const startButton = document.getElementById('start-button');
+            const completionModal = document.getElementById('completion-modal');
+            const restartButton = document.getElementById('restart-button');
+            const closeModalButton = document.getElementById('close-modal-button');
+            const perimeterInfo = document.getElementById('perimeter-info');
+            const goalInfo = document.getElementById('goal-info');
+            const gridContainer = document.getElementById('grid-container');
+            const dimensionTooltip = document.getElementById('dimension-tooltip');
+            const resultsContainer = document.getElementById('results-container');
+            const sliderViewport = document.getElementById('slider-viewport');
+            const prevBtn = document.getElementById('prevBtn');
+            const nextBtn = document.getElementById('nextBtn');
+            const clearBtn = document.getElementById('clearBtn');
+            const newPerimeterBtn = document.getElementById('newPerimeterBtn');
+            const gridSize = 20;
+            const MIN_HALF_PERIMETER = 4, MAX_HALF_PERIMETER = 15;
+            let isDrawing = false, startX, startY;
+            let hedefCevre, totalPossibleRectangles = 0, foundRectanglesCount = 0;
+            let currentIndex = 0;
+
+            function startActivity() {
+                instructionModal.classList.add('hidden');
+                appContainer.classList.add('visible');
+            }
+
+            function showCompletionModal() {
+                completionModal.classList.remove('hidden');
+            }
+
+            function hideCompletionModal() {
+                completionModal.classList.add('hidden');
+            }
+
+            function createResultRectangle(width, height) {
+                const exists = Array.from(resultsContainer.children).some(child => (child.dataset.width == width && child.dataset.height == height) || (child.dataset.width == height && child.dataset.height == width));
+                if (exists) {
+                    showToast("Bu dikdörtgeni daha önce çizdiniz.");
+                    return;
+                }
+                foundRectanglesCount++;
+                updateGoalInfo();
+                const isSquare = width === height;
+                const rect = document.createElement('div');
+                rect.classList.add('result-rectangle');
+                rect.dataset.width = width;
+                rect.dataset.height = height;
+                const cellSize = () => parseInt(getComputedStyle(document.documentElement).getPropertyValue('--cell-size'));
+                rect.style.width = `${width * cellSize()}px`;
+                rect.style.height = `${height * cellSize()}px`;
+                const bottomLabel = document.createElement('span');
+                bottomLabel.classList.add('side-label', 'label-bottom');
+                const rightLabel = document.createElement('span');
+                rightLabel.classList.add('side-label', 'label-right');
+                if (isSquare) {
+                    bottomLabel.textContent = `Kenar: ${width} br`;
+                    rightLabel.textContent = `Kenar: ${height} br`;
+                } else {
+                    if (width < height) {
+                        bottomLabel.textContent = `Kısa K: ${width} br`;
+                        rightLabel.textContent = `Uzun K: ${height} br`;
+                    } else {
+                        bottomLabel.textContent = `Uzun K: ${width} br`;
+                        rightLabel.textContent = `Kısa K: ${height} br`;
+                    }
+                }
+                rect.appendChild(bottomLabel);
+                rect.appendChild(rightLabel);
+                resultsContainer.appendChild(rect);
+                updateSlider();
+                if (totalPossibleRectangles > 0 && foundRectanglesCount === totalPossibleRectangles) {
+                    setTimeout(showCompletionModal, 500);
+                }
+            }
+
+            function startNewRound() {
+                generateTargetPerimeter();
+                resultsContainer.innerHTML = '';
+                currentIndex = 0;
+                updateSlider();
+            }
+
+            function showToast(message) {
+                const toast = document.getElementById('toast-notification');
+                toast.textContent = message;
+                toast.classList.add('show');
+                setTimeout(() => {
+                    toast.classList.remove('show');
+                }, 3000);
+            }
+
+            function updateGoalInfo() {
+                goalInfo.textContent = `Hedef: ${foundRectanglesCount} / ${totalPossibleRectangles} dikdörtgen bulundu.`;
+            }
+
+            function calculatePossibleRectangles(perimeter) {
+                let count = 0;
+                const halfPerimeter = perimeter / 2;
+                for (let w = 1; w <= Math.floor(halfPerimeter / 2); w++) {
+                    if (halfPerimeter - w > 0) count++;
+                }
+                return count;
+            }
+
+            function generateTargetPerimeter() {
+                const randomHalf = Math.floor(Math.random() * (MAX_HALF_PERIMETER - MIN_HALF_PERIMETER + 1)) + MIN_HALF_PERIMETER;
+                hedefCevre = randomHalf * 2;
+                perimeterInfo.textContent = `Hedef Çevre Uzunluğu: ${hedefCevre} birim`;
+                totalPossibleRectangles = calculatePossibleRectangles(hedefCevre);
+                foundRectanglesCount = 0;
+                updateGoalInfo();
+            }
+
+            function updateSlider() {
+                const rects = resultsContainer.children;
+                if (rects.length === 0) {
+                    prevBtn.style.display = 'none';
+                    nextBtn.style.display = 'none';
+                    resultsContainer.style.transform = 'translateY(0px)';
+                    return;
+                }
+
+                const viewportHeight = sliderViewport.offsetHeight;
+                const contentHeight = resultsContainer.scrollHeight;
+
+                if (contentHeight > viewportHeight) {
+                    prevBtn.style.display = 'block';
+                    nextBtn.style.display = 'block';
+                } else {
+                    prevBtn.style.display = 'none';
+                    nextBtn.style.display = 'none';
+                }
+
+                let currentOffset = 0;
+                if (currentIndex > 0 && rects[currentIndex]) {
+                    currentOffset = rects[currentIndex].offsetTop;
+                }
+
+                resultsContainer.style.transform = `translateY(-${currentOffset}px)`;
+                prevBtn.classList.toggle('disabled', currentIndex === 0);
+                nextBtn.classList.toggle('disabled', currentIndex >= rects.length - 1);
+            }
+
+            function generateGrid() {
+                gridContainer.innerHTML = '';
+                for (let i = 0; i < gridSize * gridSize; i++) {
+                    const cell = document.createElement('div');
+                    cell.classList.add('grid-cell');
+                    cell.dataset.x = i % gridSize;
+                    cell.dataset.y = Math.floor(i / gridSize);
+                    gridContainer.appendChild(cell);
+                }
+            }
+
+            function getCellFromEvent(e) {
+                if (e.type.startsWith('touch')) {
+                    const touch = e.touches[0];
+                    return document.elementFromPoint(touch.clientX, touch.clientY);
+                } else {
+                    return e.target;
+                }
+            }
+
+            function handleDrawStart(e) {
+                e.preventDefault();
+                let startCell = getCellFromEvent(e);
+                if (startCell && startCell.classList.contains('grid-cell')) {
+                    isDrawing = true;
+                    startX = parseInt(startCell.dataset.x);
+                    startY = parseInt(startCell.dataset.y);
+                    dimensionTooltip.style.display = 'block';
+                }
+            }
+
+            function handleDrawMove(e) {
+                if (!isDrawing) return;
+                e.preventDefault();
+                let clientX, clientY;
+                if (e.type.startsWith('touch')) {
+                    clientX = e.touches[0].clientX;
+                    clientY = e.touches[0].clientY;
+                } else {
+                    clientX = e.clientX;
+                    clientY = e.clientY;
+                }
+                dimensionTooltip.style.left = `${clientX + 15}px`;
+                dimensionTooltip.style.top = `${clientY + 15}px`;
+                let currentCell = document.elementFromPoint(clientX, clientY);
+                if (!currentCell || !currentCell.classList.contains('grid-cell')) return;
+                const currentX = parseInt(currentCell.dataset.x);
+                const currentY = parseInt(currentCell.dataset.y);
+                const width = Math.abs(currentX - startX) + 1;
+                const height = Math.abs(currentY - startY) + 1;
+                if (width === height) {
+                    dimensionTooltip.innerHTML = `Kenar: ${width} br`;
+                } else {
+                    const kisaKenar = Math.min(width, height);
+                    const uzunKenar = Math.max(width, height);
+                    dimensionTooltip.innerHTML = `Kısa Kenar: ${kisaKenar} br <br> Uzun Kenar: ${uzunKenar} br`;
+                }
+                document.querySelectorAll('.grid-cell.preview').forEach(c => c.classList.remove('preview'));
+                const minX = Math.min(startX, currentX), maxX = Math.max(startX, currentX);
+                const minY = Math.min(startY, currentY), maxY = Math.max(startY, currentY);
+                document.querySelectorAll('.grid-cell').forEach(cell => {
+                    const x = parseInt(cell.dataset.x), y = parseInt(cell.dataset.y);
+                    if (x >= minX && x <= maxX && y >= minY && y <= maxY) {
+                        cell.classList.add('preview');
+                    }
+                });
+            }
+
+            function handleDrawEnd(e) {
+                if (!isDrawing) return;
+                isDrawing = false;
+                dimensionTooltip.style.display = 'none';
+                const previewCells = document.querySelectorAll('.grid-cell.preview');
+                if (previewCells.length === 0) return;
+                document.querySelectorAll('.grid-cell.preview').forEach(c => c.classList.remove('preview'));
+                let minX = gridSize, maxX = 0, minY = gridSize, maxY = 0;
+                previewCells.forEach(cell => {
+                    minX = Math.min(minX, parseInt(cell.dataset.x));
+                    maxX = Math.max(maxX, parseInt(cell.dataset.x));
+                    minY = Math.min(minY, parseInt(cell.dataset.y));
+                    maxY = Math.max(maxY, parseInt(cell.dataset.y));
+                });
+                const width = maxX - minX + 1, height = maxY - minY + 1;
+                const perimeter = 2 * (width + height);
+                if (perimeter === hedefCevre) {
+                    createResultRectangle(width, height);
+                }
+            }
+
+            function clearResults() {
+                resultsContainer.innerHTML = '';
+                foundRectanglesCount = 0;
+                currentIndex = 0;
+                updateGoalInfo();
+                updateSlider();
+            }
+
+            startButton.addEventListener('click', startActivity);
+            newPerimeterBtn.addEventListener('click', startNewRound);
+            clearBtn.addEventListener('click', clearResults);
+            restartButton.addEventListener('click', () => {
+                hideCompletionModal();
+                startNewRound();
+            });
+            closeModalButton.addEventListener('click', hideCompletionModal);
+
+            gridContainer.addEventListener('mousedown', handleDrawStart);
+            gridContainer.addEventListener('mousemove', handleDrawMove);
+            window.addEventListener('mouseup', handleDrawEnd);
+            gridContainer.addEventListener('touchstart', handleDrawStart, { passive: false });
+            gridContainer.addEventListener('touchmove', handleDrawMove, { passive: false });
+            window.addEventListener('touchend', handleDrawEnd);
+
+            prevBtn.addEventListener('click', () => {
+                if (currentIndex > 0) {
+                    currentIndex--;
+                    updateSlider();
+                }
+            });
+
+            nextBtn.addEventListener('click', () => {
+                if (currentIndex < resultsContainer.children.length - 1) {
+                    currentIndex++;
+                    updateSlider();
+                }
+            });
+
+            generateTargetPerimeter();
+            generateGrid();
+            updateSlider();
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Doğru-Yanlış Etkinliği (Mobil Uyumlu)</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #1e90ff;
+            --success-color: #00cc99;
+            --error-color: #ff4d4d;
+            --bg-color-start: #f0f4ff;
+            --bg-color-end: #e6e9ff;
+            --container-bg: #ffffff;
+            --text-color: #2d3748;
+            --star-filled-color: #ffaa00;
+            --star-empty-color: #e2e8f0;
+            --shadow-color: rgba(0, 0, 0, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, var(--bg-color-start) 0%, var(--bg-color-end) 100%);
+            color: var(--text-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 16px;
+        }
+
+        .container {
+            background-color: var(--container-bg);
+            padding: 40px;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px var(--shadow-color);
+            text-align: center;
+            width: 100%;
+            max-width: 700px;
+            min-height: 500px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 6px;
+            background: linear-gradient(to right, var(--primary-color), var(--success-color));
+        }
+
+        h1 {
+            font-size: 2.2em;
+            font-weight: 700;
+            margin-bottom: 12px;
+            color: var(--text-color);
+        }
+
+        p {
+            font-size: 1.2em;
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+
+        .btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 14px 32px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1.1em;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            margin: 8px;
+            min-width: 160px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.2);
+            background-color: #40c4ff;
+        }
+
+        .btn.correct {
+            background-color: var(--success-color);
+            box-shadow: 0 4px 12px rgba(0, 204, 153, 0.4);
+        }
+
+        .btn.incorrect {
+            background-color: var(--error-color);
+            animation: shake 0.4s ease;
+            box-shadow: 0 4px 12px rgba(255, 77, 77, 0.4);
+        }
+
+        .btn:disabled {
+            cursor: not-allowed;
+            opacity: 0.6;
+            transform: none;
+        }
+
+        #quiz-screen, #end-screen {
+            display: none;
+        }
+
+        #progress-text {
+            font-size: 1em;
+            color: #718096;
+            margin-bottom: 16px;
+            font-weight: 600;
+        }
+
+        #question-text {
+            font-size: 1.4em;
+            min-height: 100px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            background: #f7fafc;
+            border-radius: 12px;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .answer-buttons {
+            margin-top: 24px;
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+
+        #detailed-results {
+            margin: 24px 0;
+            padding: 0 16px;
+        }
+
+        .result-category {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            font-size: 1.1em;
+            padding: 10px;
+            background: #f7fafc;
+            border-radius: 8px;
+        }
+
+        .category-name {
+            font-weight: 600;
+            text-align: left;
+        }
+
+        .stars {
+            font-size: 1.5em;
+            letter-spacing: 3px;
+        }
+
+        .filled-star {
+            color: var(--star-filled-color);
+        }
+
+        .empty-star {
+            color: var(--star-empty-color);
+        }
+
+        #total-result-text {
+            font-size: 1.1em;
+            font-weight: 600;
+            margin-top: 20px;
+            color: var(--text-color);
+        }
+
+        .footer {
+            position: absolute;
+            bottom: 16px;
+            right: 24px;
+            font-size: 0.9em;
+            color: #718096;
+            font-weight: 500;
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 24px;
+                min-height: 400px;
+            }
+
+            h1 {
+                font-size: 1.8em;
+            }
+
+            #question-text {
+                font-size: 1.2em;
+                padding: 16px;
+            }
+
+            .btn {
+                padding: 12px 24px;
+                font-size: 1em;
+                min-width: 120px;
+            }
+
+            .answer-buttons {
+                flex-direction: column;
+                gap: 12px;
+            }
+        }
+    </style>
+    <script src="scorm_api.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div id="start-screen">
+            <h1>Doğru mu, Yanlış mı?</h1>
+            <p>Verilen ifadeleri oku ve doğru mu, yanlış mı olduklarına karar ver!</p>
+            <button id="start-btn" class="btn">Başla</button>
+        </div>
+        <div id="quiz-screen" style="display: none; flex-direction: column;">
+            <p id="progress-text">Soru 1 / 15</p>
+            <p id="question-text">Bir sayıyı 100 ile kısa yoldan çarpmak için sayının sağına iki tane sıfır eklenir.</p>
+            <div class="answer-buttons">
+                <button id="true-btn" class="btn">Doğru</button>
+                <button id="false-btn" class="btn">Yanlış</button>
+            </div>
+        </div>
+        <div id="end-screen" style="display: none;">
+            <h1 id="result-title"></h1>
+            <div id="detailed-results"></div>
+            <p id="total-result-text"></p>
+            <button id="restart-btn" class="btn">Tekrar Başla</button>
+        </div>
+        <div class="footer">Hazırlayan: Osman AYDOĞDU</div>
+    </div>
+    <script>
+        let isAudioInitialized = false;
+        const synth = new Tone.Synth().toDestination();
+        function playSuccessSound() { if (isAudioInitialized) synth.triggerAttackRelease("C5", "8n"); }
+        function playErrorSound() { if (isAudioInitialized) synth.triggerAttackRelease("A3", "8n"); }
+        function playClickSound() { if (!isAudioInitialized) return; const cS = new Tone.MembraneSynth().toDestination(); cS.triggerAttackRelease("C2", "8n"); }
+        function playEndSound() { if (!isAudioInitialized) return; const eS = new Tone.PolySynth(Tone.Synth).toDestination(); const n = Tone.now(); eS.triggerAttackRelease(["C4", "E4", "G4"], "8n", n); eS.triggerAttackRelease(["G4", "B4", "D5"], "8n", n + 0.2); eS.triggerAttackRelease(["C5", "E5", "G5"], "4n", n + 0.4); }
+
+        const sorular = {
+            bilgi: [
+                { text: "Bir çıkarma işleminde eksileni bulmak için çıkan ile fark toplanır.", answer: true },
+                { text: "Bir bölme işleminde kalan, bölenden büyük olabilir.", answer: false },
+                { text: "İki kişinin sahip olduğu nesneleri birleştirip toplam sayıyı bulmak toplama işlemiyle yapılır.", answer: true },
+                { text: "Çarpma işlemi, tekrarlı çıkarma işleminin kısa yoludur.", answer: false },
+                { text: "Bir çarpma işleminde çarpanlardan biri 0 ise sonuç her zaman 0 olur.", answer: true }
+            ],
+            kavrama: [
+                { text: "Bir bölme işleminde kalanı yorumlamak, problemin çözümünde önemli olabilir. Örneğin, \"25 öğrenci 4 kişilik sıralara oturursa kaç sıra gereklidir?\" probleminde kalan önemlidir.", answer: true },
+                { text: "Bir problemi çözmek için her zaman dört işlemi de kullanmak gerekir.", answer: false },
+                { text: "Bir sayıyı 100 ile kısa yoldan çarpmak için sayının sağına iki tane sıfır eklenir.", answer: true },
+                { text: "Bir marketten 3 tane 5 TL'lik çikolata ve 2 tane 10 TL'lik bisküvi alan biri, toplam tutarı bulmak için sadece çarpma işlemi yapar.", answer: false },
+                { text: '"Bir çiftlikte 10 tavuk ve 5 inek vardır. Bu çiftlikteki hayvanların toplam ayak sayısı kaçtır?" problemi, hem çarpma hem de toplama işlemi gerektiren bir problemdir.', answer: true }
+            ],
+            uygulama: [
+                { text: "Tanesi 15 TL olan kalemlerden 10 tane alan bir kişi, 150 TL öder.", answer: true },
+                { text: "Her gün 12 sayfa kitap okuyan biri, 150 sayfalık bir kitabı 12 günde bitirir.", answer: false },
+                { text: "95 yolcusu olan bir otobüsten ilk durakta 15 kişi inip 10 kişi binince, otobüste 90 yolcu kalır.", answer: true },
+                { text: "Bir mağazada 450 TL’ye satılan bir ayakkabıya 100 TL indirim yapılırsa, bu ayakkabıdan 4 tane alan bir kişi 1700 TL öder.", answer: false },
+                { text: "5A sınıfındaki 27 öğrenci, müze gezisi için toplam 540 TL ödediyse, kişi başı bilet ücreti 20 TL'dir.", answer: true }
+            ]
+        };
+        const TOTAL_QUESTIONS = sorular.bilgi.length + sorular.kavrama.length + sorular.uygulama.length;
+
+        const startScreen = document.getElementById('start-screen'), quizScreen = document.getElementById('quiz-screen'), endScreen = document.getElementById('end-screen');
+        const startBtn = document.getElementById('start-btn'), restartBtn = document.getElementById('restart-btn');
+        const progressText = document.getElementById('progress-text'), questionText = document.getElementById('question-text');
+        const trueBtn = document.getElementById('true-btn'), falseBtn = document.getElementById('false-btn');
+        const resultTitle = document.getElementById('result-title'), detailedResults = document.getElementById('detailed-results'), totalResultText = document.getElementById('total-result-text');
+
+        let currentQuestionIndex = 0;
+        let scores = { bilgi: 0, kavrama: 0, uygulama: 0 };
+        let shuffledQuestions = [];
+
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        startBtn.addEventListener('click', async () => {
+            if (!isAudioInitialized) { await Tone.start(); isAudioInitialized = true; }
+            playClickSound();
+            startScreen.style.display = 'none';
+            quizScreen.style.display = 'flex';
+            startGame();
+        });
+
+        restartBtn.addEventListener('click', () => {
+            playClickSound();
+            endScreen.style.display = 'none';
+            startScreen.style.display = 'block';
+        });
+
+        trueBtn.addEventListener('click', () => selectAnswer(true));
+        falseBtn.addEventListener('click', () => selectAnswer(false));
+
+        function startGame() {
+            currentQuestionIndex = 0;
+            scores = { bilgi: 0, kavrama: 0, uygulama: 0 };
+            shuffledQuestions = shuffleArray([...sorular.bilgi, ...sorular.kavrama, ...sorular.uygulama]);
+            showQuestion();
+        }
+
+        function showQuestion() {
+            resetButtonStyles();
+            if (currentQuestionIndex < TOTAL_QUESTIONS) {
+                const question = shuffledQuestions[currentQuestionIndex];
+                progressText.textContent = `Soru ${currentQuestionIndex + 1} / ${TOTAL_QUESTIONS}`;
+                questionText.textContent = question.text;
+            } else {
+                showResults();
+            }
+        }
+
+        function selectAnswer(userAnswer) {
+            const isCorrect = userAnswer === shuffledQuestions[currentQuestionIndex].answer;
+            trueBtn.disabled = true;
+            falseBtn.disabled = true;
+            if (isCorrect) {
+                playSuccessSound();
+                if (currentQuestionIndex < 5) scores.bilgi++;
+                else if (currentQuestionIndex < 10) scores.kavrama++;
+                else scores.uygulama++;
+                const selectedBtn = userAnswer ? trueBtn : falseBtn;
+                selectedBtn.classList.add('correct');
+            } else {
+                playErrorSound();
+                const selectedBtn = userAnswer ? trueBtn : falseBtn;
+                selectedBtn.classList.add('incorrect');
+                const correctBtn = !userAnswer ? trueBtn : falseBtn;
+                correctBtn.classList.add('correct');
+            }
+            setTimeout(() => { currentQuestionIndex++; showQuestion(); }, 1500);
+        }
+
+        function resetButtonStyles() {
+            trueBtn.disabled = false;
+            falseBtn.disabled = false;
+            trueBtn.classList.remove('correct', 'incorrect');
+            falseBtn.classList.remove('correct', 'incorrect');
+        }
+
+        function generateStars(score, total = 5) {
+            const filled = '★'.repeat(score);
+            const empty = '★'.repeat(total - score);
+            return `<span class="filled-star">${filled}</span><span class="empty-star">${empty}</span>`;
+        }
+
+        function showResults() {
+            playEndSound();
+            quizScreen.style.display = 'none';
+            endScreen.style.display = 'block';
+            const totalScore = scores.bilgi + scores.kavrama + scores.uygulama;
+            const percentage = (totalScore / TOTAL_QUESTIONS) * 100;
+
+            if (percentage >= 80) {
+                resultTitle.textContent = "Harika İş Çıkardın!";
+            } else if (percentage >= 50) {
+                resultTitle.textContent = "Güzel Çaba!";
+            } else {
+                resultTitle.textContent = "Biraz Daha Çalışalım!";
+            }
+
+            detailedResults.innerHTML = `
+                <div class="result-category"><span class="category-name">Temel Bilgiler:</span><span class="stars">${generateStars(scores.bilgi)}</span></div>
+                <div class="result-category"><span class="category-name">Konuyu Anlama:</span><span class="stars">${generateStars(scores.kavrama)}</span></div>
+                <div class="result-category"><span class="category-name">Bilgini Kullanma:</span><span class="stars">${generateStars(scores.uygulama)}</span></div>
+            `;
+            totalResultText.textContent = `Toplam Başarın: ${TOTAL_QUESTIONS} soruda ${totalScore} doğru`;
+        }
+    </script>
+</body>
+</html>

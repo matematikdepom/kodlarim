@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dörtgen Kardeşliği</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
+    <style>
+        :root {
+            --grid-unit-size: 22px;
+            --primary-bg: #f8fafc;
+            --card-bg: #ffffff;
+            --text-color: #1e293b;
+            --accent-color: #3b82f6;
+            --success-color: #10b981;
+            --error-color: #ef4444;
+            --warning-color: #f59e0b;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+            --border-radius: 12px;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 32px;
+            background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+            color: var(--text-color);
+            overflow-x: hidden;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 1;
+            visibility: visible;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+
+        .modal-overlay.hidden {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+
+        .modal-content {
+            background: var(--card-bg);
+            padding: 32px;
+            border-radius: var(--border-radius);
+            max-width: 550px;
+            width: 90%;
+            box-shadow: var(--shadow);
+            text-align: center;
+            transform: translateY(-20px);
+            transition: transform 0.3s ease;
+        }
+
+        .modal-overlay:not(.hidden) .modal-content {
+            transform: translateY(0);
+        }
+
+        .modal-content h2 {
+            color: var(--text-color);
+            margin: 0 0 16px;
+            font-size: 1.75rem;
+            font-weight: 700;
+        }
+
+        .modal-content ul {
+            list-style: none;
+            padding: 0;
+            margin: 24px 0;
+            text-align: left;
+        }
+
+        .modal-content li {
+            margin-bottom: 12px;
+            font-size: 1rem;
+            line-height: 1.5;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .modal-content li::before {
+            content: "🔹";
+        }
+
+        #start-button {
+            background: var(--accent-color);
+            color: white;
+            padding: 12px 24px;
+            font-size: 1.125rem;
+            font-weight: 600;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.2s ease, transform 0.2s ease;
+        }
+
+        #start-button:hover {
+            background: #2563eb;
+            transform: translateY(-2px);
+        }
+
+        #app-wrapper {
+            opacity: 0;
+            transition: opacity 0.5s ease;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #app-wrapper.visible {
+            opacity: 1;
+        }
+
+        .main-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 24px;
+            justify-content: center;
+            max-width: 1200px;
+            margin: 0 auto;
+            flex: 1;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: var(--border-radius);
+            padding: 24px;
+            box-shadow: var(--shadow);
+            transition: transform 0.2s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-4px);
+        }
+
+        .grid-wrapper {
+            flex: 3;
+            min-width: 320px;
+        }
+
+        .sidebar {
+            flex: 1;
+            min-width: 300px;
+        }
+
+        .grid-container {
+            position: relative;
+            width: 100%;
+            min-height: 450px;
+            background: #fff;
+            background-image: linear-gradient(#e5e7eb 1px, transparent 1px),
+                            linear-gradient(90deg, #e5e7eb 1px, transparent 1px);
+            background-size: var(--grid-unit-size) var(--grid-unit-size);
+            border: 1px solid #d1d5db;
+            border-radius: var(--border-radius);
+            padding: 12px;
+            box-sizing: border-box;
+            margin-top: 16px;
+            transition: height 0.3s ease-in-out;
+        }
+
+        .rectangle {
+            position: absolute;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: white;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+            background: var(--accent-color);
+            border: 2px solid rgba(255, 255, 255, 0.9);
+            box-sizing: border-box;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: var(--shadow);
+            border-radius: 4px;
+        }
+
+        .rectangle:hover {
+            transform: scale(1.05) rotate(2deg);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .rectangle.selected {
+            background: var(--warning-color);
+            border-color: #fff;
+            box-shadow: 0 0 20px rgba(245, 158, 11, 0.5);
+            transform: scale(1.06);
+        }
+
+        .rectangle.found {
+            pointer-events: none;
+            background: var(--success-color);
+            border-color: #fff;
+            animation: success-pulse 0.5s ease-out;
+        }
+
+        .rectangle.shake {
+            animation: shake 0.4s ease-in-out;
+            background: var(--error-color);
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-6px); }
+            40%, 80% { transform: translateX(6px); }
+        }
+
+        @keyframes success-pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.08); }
+            100% { transform: scale(1); }
+        }
+
+        .controls {
+            display: flex;
+            gap: 12px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            border: none;
+            color: white;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: var(--shadow);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+
+        #checkButton {
+            background: var(--accent-color);
+        }
+
+        #restartButton {
+            background: #6b7280;
+        }
+
+        #checkButton:disabled {
+            background: #bfdbfe;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        #feedbackMessage {
+            margin-top: 16px;
+            padding: 12px;
+            border-radius: 8px;
+            font-weight: 600;
+            min-height: 24px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .feedback-success {
+            background: #d1fae5;
+            color: var(--success-color);
+        }
+
+        .feedback-error {
+            background: #fee2e2;
+            color: var(--error-color);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            background: #fff;
+            margin-top: 16px;
+            border: 1px solid #e5e7eb;
+            border-radius: var(--border-radius);
+            overflow: hidden;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        th {
+            background: #f9fafb;
+            color: var(--text-color);
+            font-weight: 600;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        .footer {
+            margin-top: auto;
+            padding: 16px 0;
+            text-align: center;
+            color: #64748b;
+            font-size: 0.875rem;
+        }
+
+        @media (max-width: 768px) {
+            .main-container {
+                flex-direction: column;
+            }
+            body {
+                padding: 16px;
+            }
+        }
+    </style>
+    <script src="scorm_api.js"></script>
+</head>
+<body>
+    <div id="instruction-modal" class="modal-overlay">
+        <div class="modal-content">
+            <h2>✨ Dörtgen Kardeşliği ✨</h2>
+            <ul>
+                <li>🔎 Verilen dörtgenlerden eşit alan ölçülerine sahip olanların <strong>hepsini</strong> seçiniz.</li>
+                <li>📏 Kareli zemindeki her bir karenin kenarı <strong>1 birimdir</strong>.</li>
+                <li>✅ Seçim tamamlandığında "Kontrol Et" butonuna tıklayınız.</li>
+            </ul>
+            <button id="start-button" class="btn">Hadi Başlayalım!</button>
+        </div>
+    </div>
+    <div id="app-wrapper">
+        <div class="main-container">
+            <div class="grid-wrapper card">
+                <p>Eşit alan ölçülerine sahip dikdörtgenlerin <strong>hepsini</strong> seç ve kontrol et.</p>
+                <div class="grid-container" id="grid"></div>
+            </div>
+            <div class="sidebar card">
+                <h2>Kontrol Paneli</h2>
+                <div id="goal-info" style="font-weight: 600; margin-top: 10px;"></div>
+                <div class="controls">
+                    <button id="checkButton" class="btn">Kontrol Et</button>
+                    <button id="restartButton" class="btn">Yeniden</button>
+                </div>
+                <div id="feedbackMessage"></div>
+                <table id="areaTable">
+                    <thead><tr><th>Genişlik</th><th>Yükseklik</th><th>Alan</th></tr></thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+        <div class="footer">Hazırlayan: Osman AYDOĞDU</div>
+    </div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const instructionModal = document.getElementById('instruction-modal');
+            const startButton = document.getElementById('start-button');
+            const appWrapper = document.getElementById('app-wrapper');
+            const grid = document.getElementById('grid');
+            const checkButton = document.getElementById('checkButton');
+            const restartButton = document.getElementById('restartButton');
+            const feedbackMessage = document.getElementById('feedbackMessage');
+            const tableBody = document.querySelector('#areaTable tbody');
+            const goalInfo = document.getElementById('goal-info');
+            
+            const unitSize = 22;
+            const MAX_DIMENSION = 16;
+            let selectedRects = new Set();
+            let correctCount = 0;
+            const basePossibleAreas = [24, 36, 48, 60, 64, 72, 80, 96, 100, 120, 144, 128]; 
+            let challengePool = [];
+
+            function getValidFactors(area) {
+                const factors = [];
+                for (let i = 1; i <= Math.sqrt(area); i++) {
+                    if (area % i === 0) {
+                        const partner = area / i;
+                        if (i <= MAX_DIMENSION && partner <= MAX_DIMENSION) {
+                            factors.push([i, partner]);
+                        }
+                    }
+                }
+                return factors;
+            }
+
+            function createAndShuffleChallengePool() {
+                const filteredAreas = basePossibleAreas.filter(area => getValidFactors(area).length >= 3);
+                challengePool = [...filteredAreas];
+                for (let i = challengePool.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [challengePool[i], challengePool[j]] = [challengePool[j], challengePool[i]];
+                }
+            }
+            
+            function generateChallenge() {
+                if (challengePool.length === 0) {
+                    createAndShuffleChallengePool();
+                }
+                const targetArea = challengePool.pop();
+                const factors = getValidFactors(targetArea);
+                const rectsData = [];
+
+                const correctRectsToShow = Math.random() > 0.5 && factors.length >= 4 ? 4 : 3;
+                correctCount = correctRectsToShow;
+                const shuffledFactors = factors.sort(() => 0.5 - Math.random());
+
+                for (let i = 0; i < correctCount; i++) {
+                    rectsData.push({ width: shuffledFactors[i][0], height: shuffledFactors[i][1], isCorrect: true });
+                }
+
+                const usedAreas = new Set([targetArea]);
+                const numDistractors = 5 - correctCount;
+                for (let i = 0; i < numDistractors; i++) {
+                    let w, h, area, safety = 0;
+                    do {
+                        w = Math.floor(Math.random() * (MAX_DIMENSION - 2)) + 2;
+                        h = Math.floor(Math.random() * (MAX_DIMENSION - 2)) + 2;
+                        area = w * h;
+                        safety++;
+                    } while (usedAreas.has(area) && safety < 50);
+                    usedAreas.add(area);
+                    rectsData.push({ width: w, height: h, isCorrect: false });
+                }
+                return rectsData.sort(() => 0.5 - Math.random());
+            }
+
+            function loadNewChallenge() {
+                grid.innerHTML = '';
+                tableBody.innerHTML = '';
+                feedbackMessage.className = '';
+                feedbackMessage.textContent = '';
+                checkButton.disabled = false;
+                selectedRects.clear();
+                const rectsToCreate = generateChallenge();
+                rectsToCreate.forEach((rect, index) => {
+                    const rectElement = document.createElement('div');
+                    rectElement.className = 'rectangle';
+                    rectElement.dataset.id = index;
+                    rectElement.dataset.area = rect.width * rect.height;
+                    rectElement.dataset.width = rect.width;
+                    rectElement.dataset.height = rect.height;
+                    rectElement.dataset.isCorrect = rect.isCorrect;
+                    rectElement.style.width = `${rect.width * unitSize}px`;
+                    rectElement.style.height = `${rect.height * unitSize}px`;
+                    rectElement.addEventListener('click', handleRectClick);
+                    grid.appendChild(rectElement);
+                });
+                goalInfo.innerHTML = `Eşit alan ölçülerine sahip ${correctCount} dikdörtgen var.`;
+                setTimeout(placeRectangles, 50);
+            }
+            
+            function handleRectClick(event) {
+                const rect = event.currentTarget;
+                rect.classList.toggle('selected');
+                if (selectedRects.has(rect.dataset.id)) {
+                    selectedRects.delete(rect.dataset.id);
+                } else {
+                    selectedRects.add(rect.dataset.id);
+                }
+            }
+            
+            function checkSelection() {
+                const selectedCorrect = [], selectedIncorrect = [];
+                selectedRects.forEach(id => {
+                    const rect = document.querySelector(`.rectangle[data-id='${id}']`);
+                    if (rect.dataset.isCorrect === 'true') {
+                        selectedCorrect.push(rect);
+                    } else {
+                        selectedIncorrect.push(rect);
+                    }
+                });
+                if (selectedCorrect.length === correctCount && selectedIncorrect.length === 0) {
+                    setFeedback('HARİKA! Hepsini doğru buldun!', 'success');
+                    checkButton.disabled = true;
+                    confetti({ particleCount: 150, spread: 90, origin: { y: 0.6 } });
+                    selectedCorrect.forEach(rect => {
+                        rect.classList.remove('selected');
+                        rect.classList.add('found');
+                        const row = tableBody.insertRow();
+                        row.innerHTML = `<td>${rect.dataset.width} br</td><td>${rect.dataset.height} br</td><td>${rect.dataset.area} br²</td>`;
+                    });
+                } else {
+                    setFeedback('Tam olmadı, tekrar dene!', 'error');
+                    selectedRects.forEach(id => {
+                        const rect = document.querySelector(`.rectangle[data-id='${id}']`);
+                        rect.classList.add('shake');
+                        setTimeout(() => {
+                            rect.classList.remove('shake');
+                            rect.classList.remove('selected');
+                        }, 500);
+                    });
+                    selectedRects.clear();
+                }
+            }
+            
+            function placeRectangles() {
+                const rectElements = Array.from(grid.querySelectorAll('.rectangle'));
+                if (rectElements.length === 0) return;
+
+                rectElements.sort((a, b) => b.offsetWidth * b.offsetHeight - a.offsetWidth * a.offsetHeight);
+
+                let currentX = unitSize;
+                let currentY = unitSize;
+                let rowMaxHeight = 0;
+                const gridWidth = grid.clientWidth;
+
+                rectElements.forEach(rect => {
+                    if (currentX + rect.offsetWidth + unitSize > gridWidth) {
+                        currentX = unitSize;
+                        currentY += rowMaxHeight + unitSize;
+                        rowMaxHeight = 0;
+                    }
+
+                    rect.style.left = `${currentX}px`;
+                    rect.style.top = `${currentY}px`;
+                    
+                    currentX += rect.offsetWidth + unitSize;
+                    rowMaxHeight = Math.max(rowMaxHeight, rect.offsetHeight);
+                });
+
+                const totalHeight = currentY + rowMaxHeight + unitSize;
+                grid.style.height = `${totalHeight}px`;
+            }
+
+            function setFeedback(message, type) {
+                feedbackMessage.textContent = message;
+                feedbackMessage.className = `feedback-${type}`;
+            }
+
+            function main() {
+                startButton.addEventListener('click', () => {
+                    instructionModal.classList.add('hidden');
+                    appWrapper.classList.add('visible');
+                    createAndShuffleChallengePool();
+                    loadNewChallenge();
+                });
+                checkButton.addEventListener('click', checkSelection);
+                restartButton.addEventListener('click', loadNewChallenge);
+                window.addEventListener('resize', placeRectangles);
+            }
+            
+            main();
+        });
+    </script>
+</body>
+</html>

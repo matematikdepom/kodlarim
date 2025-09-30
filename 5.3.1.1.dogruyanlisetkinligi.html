@@ -1,0 +1,400 @@
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Doğru-Yanlış Etkinliği (Mobil Uyumlu)</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #6366f1; /* Mor tonu */
+            --success-color: #22c55e; /* Yeşil */
+            --suggestion-color: #eab308; /* Sarı */
+            --error-color: #ef4444; /* Kırmızı */
+            --bg-color-start: #f3f4f6; /* Açık gri gradient başlangıcı */
+            --bg-color-end: #e5e7eb; /* Açık gri gradient sonu */
+            --container-bg: #ffffff; /* Beyaz konteyner */
+            --text-color: #1f2937; /* Koyu gri metin */
+            --star-filled-color: #fde047; /* Parlak sarı yıldız */
+            --star-empty-color: #d1d5db; /* Açık gri boş yıldız */
+        }
+        body.quiz-app {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, var(--bg-color-start) 0%, var(--bg-color-end) 100%);
+            color: var(--text-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 16px;
+            box-sizing: border-box;
+            position: relative;
+        }
+        .quiz-container {
+            background-color: var(--container-bg);
+            padding: 40px;
+            border-radius: 32px;
+            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            width: 100%;
+            max-width: 640px;
+            min-height: 480px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            border: 1px solid rgba(0, 0, 0, 0.03);
+            position: relative;
+        }
+        .quiz-container h1 {
+            font-size: 2.25em;
+            font-weight: 700;
+            margin-bottom: 12px;
+        }
+        .quiz-container p {
+            font-size: 1.25em;
+            margin-bottom: 28px;
+            line-height: 1.6;
+        }
+        .quiz-btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 16px 32px;
+            border-radius: 16px;
+            cursor: pointer;
+            font-size: 1.1em;
+            font-weight: 600;
+            transition: background-color 0.3s, transform 0.3s, box-shadow 0.3s;
+            margin: 12px;
+            min-width: 160px;
+            box-shadow: 0 6px 16px rgba(99, 102, 241, 0.2);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .quiz-btn:hover {
+            opacity: 0.9;
+            transform: translateY(-4px);
+            box-shadow: 0 8px 20px rgba(99, 102, 241, 0.3);
+        }
+        .quiz-btn.correct {
+            background-color: var(--success-color);
+            box-shadow: 0 6px 16px rgba(34, 197, 94, 0.3);
+        }
+        .quiz-btn.incorrect {
+            background-color: var(--error-color);
+            animation: shake 0.5s;
+            box-shadow: 0 6px 16px rgba(239, 68, 68, 0.3);
+        }
+        .quiz-btn:disabled {
+            cursor: not-allowed;
+            opacity: 0.7;
+            transform: translateY(0);
+        }
+        #quiz-progress-text {
+            font-size: 1em;
+            color: #6b7280;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+        #quiz-question-text {
+            font-size: 1.5em;
+            min-height: 140px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+            border-radius: 16px;
+            background-color: #f9fafb;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+        .quiz-answer-buttons {
+            margin-top: 28px;
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+        }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-8px); }
+            75% { transform: translateX(8px); }
+        }
+        #quiz-detailed-results {
+            margin: 28px 0;
+            padding: 0 20px;
+        }
+        .quiz-result-category {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            font-size: 1.2em;
+            padding: 12px;
+            background-color: #f9fafb;
+            border-radius: 12px;
+        }
+        .quiz-category-name {
+            font-weight: 700;
+            text-align: left;
+        }
+        .quiz-stars {
+            font-size: 1.8em;
+            letter-spacing: 3px;
+        }
+        .quiz-filled-star {
+            color: var(--star-filled-color);
+        }
+        .quiz-empty-star {
+            color: var(--star-empty-color);
+        }
+        #quiz-total-result-text {
+            font-size: 1.15em;
+            font-weight: 700;
+            margin-top: 24px;
+        }
+        .quiz-footer {
+            position: absolute;
+            bottom: 16px;
+            left: 0;
+            right: 0;
+            text-align: center;
+            font-size: 0.9em;
+            color: #6b7280;
+            font-weight: 500;
+        }
+        /* Buton ikonları */
+        .quiz-btn::before {
+            content: '';
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            margin-right: 8px;
+            vertical-align: middle;
+        }
+        #quiz-true-btn::before {
+            content: '✅';
+        }
+        #quiz-false-btn::before {
+            content: '❌';
+        }
+        /* Arka plan deseni */
+        body.quiz-app::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 10%, transparent 10%);
+            background-size: 40px 40px;
+            opacity: 0.3;
+            pointer-events: none;
+            z-index: -1;
+        }
+    </style>
+    <script src="scorm_api.js"></script>
+</head>
+<body class="quiz-app">
+    <div class="quiz-container">
+        <div id="quiz-start-screen">
+            <h1>Doğru mu, Yanlış mı?</h1>
+            <p>Verilen ifadeleri oku ve doğru mu yanlış mı olduklarına karar ver.</p>
+            <button id="quiz-start-btn" class="quiz-btn">Başla</button>
+        </div>
+        <div id="quiz-screen" style="display: none; flex-direction: column;">
+            <p id="quiz-progress-text"></p>
+            <p id="quiz-question-text"></p>
+            <div class="quiz-answer-buttons">
+                <button id="quiz-true-btn" class="quiz-btn">Doğru</button>
+                <button id="quiz-false-btn" class="quiz-btn">Yanlış</button>
+            </div>
+        </div>
+        <div id="quiz-end-screen" style="display: none;">
+            <h1 id="quiz-result-title"></h1>
+            <div id="quiz-detailed-results"></div>
+            <p id="quiz-total-result-text"></p>
+            <button id="quiz-restart-btn" class="quiz-btn">Tekrar Başla</button>
+        </div>
+        <div class="quiz-footer">Hazırlayan: Osman AYDOĞDU</div>
+    </div>
+    <script>
+        let isAudioInitialized = false;
+        const synth = new Tone.Synth().toDestination();
+        function playSuccessSound() { if (isAudioInitialized) synth.triggerAttackRelease("C5", "8n"); }
+        function playErrorSound() { if (isAudioInitialized) synth.triggerAttackRelease("A3", "8n"); }
+        function playClickSound() { if (!isAudioInitialized) return; const cS = new Tone.MembraneSynth().toDestination(); cS.triggerAttackRelease("C2", "8n"); }
+        function playEndSound() { 
+            if (!isAudioInitialized) return; 
+            const eS = new Tone.PolySynth(Tone.Synth).toDestination(); 
+            const n = Tone.now(); 
+            eS.triggerAttackRelease(["C4", "E4", "G4"], "8n", n); 
+            eS.triggerAttackRelease(["G4", "B4", "D5"], "8n", n + 0.2); 
+            eS.triggerAttackRelease(["C5", "E5", "G5"], "4n", n + 0.4); 
+        }
+
+        // --- ETKİNLİK İÇERİĞİ ---
+        const sorular = {
+            bilgi: [
+                { text: "Kapalı bir şeklin etrafındaki uzunlukların toplamına çevre denir.", answer: true },
+                { text: "Bir yüzeyin kapladığı yeri bulmak için çevre hesabı yaparız.", answer: false },
+                { text: "Dikdörtgenin alanını, yüzeyini kaplayan birim kareleri sayarak bulabiliriz.", answer: true },
+                { text: "Çevre uzunluğu 20 cm olan bir karenin bir kenar uzunluğu 10 cm'dir.", answer: false },
+                { text: "Alan ölçüsü birimi olarak santimetrekare (cm²) kullanılabilir.", answer: true },
+                { text: "Dikdörtgenin çevresi, tüm kenar uzunluklarının toplamıdır.", answer: true }, // Yeni
+                { text: "Kare bir dikdörtgen değildir.", answer: false }, // Yeni
+                { text: "Alan hesaplamak için sadece bir kenar uzunluğu yeterlidir.", answer: false } // Yeni
+            ],
+            kavrama: [
+                { text: "Kenar uzunlukları doğal sayı olan ve çevre uzunluğu 12 cm olan farklı dikdörtgenler çizilebilir.", answer: true },
+                { text: "Bir dikdörtgenin alanını hesaplamak için bütün kenar uzunluklarını toplarız.", answer: false },
+                { text: "Kare, bütün kenar uzunlukları eşit olan özel bir dikdörtgendir.", answer: true },
+                { text: "Çevre uzunluğu 18 cm olan, kenarları doğal sayı olan bir dikdörtgenin kısa kenarı 10 cm olabilir.", answer: false },
+                { text: "Bir dikdörtgenin alanını bulmak için iki ardışık (birbirine komşu) kenarının uzunluğunu çarpmak yeterlidir.", answer: true },
+                { text: "Aynı çevreye sahip iki dikdörtgenin alanları her zaman eşittir.", answer: false }, // Yeni
+                { text: "Karenin alanı, kenar uzunluğunun karesidir.", answer: true }, // Yeni
+                { text: "Çevre uzunluğu artınca alan da her zaman artar.", answer: false } // Yeni
+            ],
+            uygulama: [
+                { text: "Kısa kenarı 4 cm, uzun kenarı 6 cm olan bir dikdörtgenin çevresi 20 cm'dir.", answer: true },
+                { text: "Kenar uzunlukları 5 cm olan bir karenin çevresi ile kısa kenarı 4 cm, uzun kenarı 6 cm olan bir dikdörtgenin çevresi farklıdır.", answer: false },
+                { text: "Kareli kâğıt üzerinde eni 3 birim, boyu 5 birim olan bir dikdörtgenin alanı 15 birim karedir.", answer: true },
+                { text: "Çevresi 14 birim olan, kenar uzunlukları doğal sayı olan bir dikdörtgenin kenar uzunlukları tek bir şekilde belirlenir.", answer: false },
+                { text: "Çevre uzunluğu 14 birim olan bir dikdörtgenin kenar uzunlukları 2 birim ve 5 birim olabilir.", answer: true },
+                { text: "Uzun kenarı 7 cm, kısa kenarı 3 cm olan dikdörtgenin alanı 21 cm²'dir.", answer: true }, // Yeni
+                { text: "Bir karenin kenarı 8 cm ise alanı 64 cm²'dir.", answer: true }, // Yeni
+                { text: "Çevresi 24 cm olan bir karenin alanı 36 cm²'dir.", answer: true }, // Yeni
+                { text: "Kısa kenarı 2 cm, uzun kenarı 10 cm olan dikdörtgenin çevresi 22 cm'dir.", answer: false } // Yeni
+            ]
+        };
+        const TOTAL_QUESTIONS = sorular.bilgi.length + sorular.kavrama.length + sorular.uygulama.length;
+
+        const startScreen = document.getElementById('quiz-start-screen');
+        const quizScreen = document.getElementById('quiz-screen');
+        const endScreen = document.getElementById('quiz-end-screen');
+        const startBtn = document.getElementById('quiz-start-btn');
+        const restartBtn = document.getElementById('quiz-restart-btn');
+        const progressText = document.getElementById('quiz-progress-text');
+        const questionText = document.getElementById('quiz-question-text');
+        const trueBtn = document.getElementById('quiz-true-btn');
+        const falseBtn = document.getElementById('quiz-false-btn');
+        const resultTitle = document.getElementById('quiz-result-title');
+        const detailedResults = document.getElementById('quiz-detailed-results');
+        const totalResultText = document.getElementById('quiz-total-result-text');
+
+        let currentQuestionIndex = 0;
+        let scores = { bilgi: 0, kavrama: 0, uygulama: 0 };
+        let shuffledQuestions = [];
+
+        function shuffleArray(array) { 
+            for (let i = array.length - 1; i > 0; i--) { 
+                const j = Math.floor(Math.random() * (i + 1)); 
+                [array[i], array[j]] = [array[j], array[i]]; 
+            } 
+        }
+
+        startBtn.addEventListener('click', async () => {
+            if (!isAudioInitialized) { 
+                await Tone.start(); 
+                isAudioInitialized = true; 
+            }
+            playClickSound();
+            startScreen.style.display = 'none';
+            quizScreen.style.display = 'flex';
+            startGame();
+        });
+
+        restartBtn.addEventListener('click', () => {
+            playClickSound();
+            endScreen.style.display = 'none';
+            startScreen.style.display = 'block';
+        });
+
+        trueBtn.addEventListener('click', () => selectAnswer(true));
+        falseBtn.addEventListener('click', () => selectAnswer(false));
+
+        function startGame() {
+            currentQuestionIndex = 0;
+            scores = { bilgi: 0, kavrama: 0, uygulama: 0 };
+            shuffleArray(sorular.bilgi);
+            shuffleArray(sorular.kavrama);
+            shuffleArray(sorular.uygulama);
+            shuffledQuestions = [...sorular.bilgi, ...sorular.kavrama, ...sorular.uygulama];
+            showQuestion();
+        }
+
+        function showQuestion() {
+            resetButtonStyles();
+            if (currentQuestionIndex < TOTAL_QUESTIONS) {
+                const question = shuffledQuestions[currentQuestionIndex];
+                progressText.textContent = `Soru ${currentQuestionIndex + 1} / ${TOTAL_QUESTIONS}`;
+                questionText.textContent = question.text;
+            } else {
+                showResults();
+            }
+        }
+
+        function selectAnswer(userAnswer) {
+            const isCorrect = userAnswer === shuffledQuestions[currentQuestionIndex].answer;
+            trueBtn.disabled = true;
+            falseBtn.disabled = true;
+            if (isCorrect) {
+                playSuccessSound();
+                if (currentQuestionIndex < sorular.bilgi.length) scores.bilgi++;
+                else if (currentQuestionIndex < sorular.bilgi.length + sorular.kavrama.length) scores.kavrama++;
+                else scores.uygulama++;
+                const selectedBtn = userAnswer ? trueBtn : falseBtn;
+                selectedBtn.classList.add('correct');
+            } else {
+                playErrorSound();
+                const selectedBtn = userAnswer ? trueBtn : falseBtn;
+                selectedBtn.classList.add('incorrect');
+                const correctBtn = !userAnswer ? trueBtn : falseBtn;
+                correctBtn.classList.add('correct');
+            }
+            setTimeout(() => {
+                currentQuestionIndex++;
+                showQuestion();
+            }, 1500);
+        }
+
+        function resetButtonStyles() {
+            trueBtn.disabled = false;
+            falseBtn.disabled = false;
+            trueBtn.classList.remove('correct', 'incorrect');
+            falseBtn.classList.remove('correct', 'incorrect');
+        }
+
+        function generateStars(score, total) {
+            const filled = '★'.repeat(score);
+            const empty = '☆'.repeat(total - score);
+            return `<span class="quiz-filled-star">${filled}</span><span class="quiz-empty-star">${empty}</span>`;
+        }
+
+        function showResults() {
+            playEndSound();
+            quizScreen.style.display = 'none';
+            endScreen.style.display = 'block';
+            const totalScore = scores.bilgi + scores.kavrama + scores.uygulama;
+            const percentage = (totalScore / TOTAL_QUESTIONS) * 100;
+
+            if (percentage >= 80) {
+                resultTitle.textContent = "Harika! Etkinlik Tamamlandı!";
+            } else if (percentage >= 50) {
+                resultTitle.textContent = "İyi İş! Etkinlik Tamamlandı!";
+            } else {
+                resultTitle.textContent = "Etkinlik Tamamlandı! Daha Fazla Çalışalım!";
+            }
+
+            detailedResults.innerHTML = `
+                <div class="quiz-result-category"><span class="quiz-category-name">Temel Bilgiler:</span><span class="quiz-stars">${generateStars(scores.bilgi, sorular.bilgi.length)}</span></div>
+                <div class="quiz-result-category"><span class="quiz-category-name">Konuyu Anlama:</span><span class="quiz-stars">${generateStars(scores.kavrama, sorular.kavrama.length)}</span></div>
+                <div class="quiz-result-category"><span class="quiz-category-name">Bilgini Kullanma:</span><span class="quiz-stars">${generateStars(scores.uygulama, sorular.uygulama.length)}</span></div>
+            `;
+            totalResultText.textContent = `Toplam Başarın: ${TOTAL_QUESTIONS} soruda ${totalScore} doğru`;
+        }
+    </script>
+</body>
+</html>

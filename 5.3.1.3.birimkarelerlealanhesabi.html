@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Birimkarelerle Alan Hesabı</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --cell-size: 35px;
+            --primary-color: #4f46e5;
+            --secondary-color: #10b981;
+            --accent-color: #f472b6;
+            --background-color: #f3f4f6;
+            --card-background: #ffffff;
+            --shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            --border-radius: 12px;
+        }
+
+        @media (min-width: 950px) {
+            :root {
+                --cell-size: 40px;
+            }
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #e0e7ff, #f3f4f6);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            color: #1f2937;
+            -webkit-user-select: none;
+            user-select: none;
+            touch-action: none;
+        }
+
+        #instructions-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+        }
+
+        .modal-content {
+            background: var(--card-background);
+            padding: 40px;
+            border-radius: var(--border-radius);
+            max-width: 550px;
+            text-align: center;
+            box-shadow: var(--shadow);
+            animation: slideIn 0.3s ease;
+        }
+
+        .modal-content h2 {
+            font-size: 2.2em;
+            color: var(--primary-color);
+            margin-top: 0;
+            font-weight: 700;
+        }
+
+        .modal-content p {
+            font-size: 1.15em;
+            line-height: 1.7;
+            color: #4b5563;
+        }
+
+        #start-game-btn {
+            margin-top: 25px;
+            padding: 15px 50px;
+            font-size: 1.3em;
+            font-weight: 600;
+            color: white;
+            background: var(--secondary-color);
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: transform 0.2s, background-color 0.2s;
+        }
+
+        #start-game-btn:hover {
+            background: #059669;
+            transform: translateY(-2px);
+        }
+
+        .game-container {
+            width: 95%;
+            max-width: 1000px;
+            background: var(--card-background);
+            padding: 30px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            text-align: center;
+            display: none;
+            position: relative;
+        }
+
+        .instructions {
+            font-size: 1.15em;
+            margin-bottom: 25px;
+            color: #4b5563;
+        }
+
+        .puzzle-area {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            margin-top: 30px;
+            gap: 25px;
+            flex-wrap: wrap;
+        }
+
+        #grid-board {
+            display: grid;
+            grid-template-columns: repeat(10, var(--cell-size));
+            grid-template-rows: repeat(10, var(--cell-size));
+            border: 3px solid #a5b4fc;
+            background: #e0e7ff;
+            border-radius: 8px;
+        }
+
+        .grid-cell {
+            width: var(--cell-size);
+            height: var(--cell-size);
+            box-sizing: border-box;
+            transition: background-color 0.2s;
+        }
+
+        .filled {
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            background: linear-gradient(45deg, #a5b4fc, #c7d2fe);
+        }
+
+        .droppable {
+            background: rgba(255, 255, 255, 0.8);
+            border: 2px dashed #6b7280;
+        }
+
+        .droppable.over {
+            background: rgba(165, 180, 252, 0.7);
+        }
+
+        #pieces-container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            padding: 15px;
+            background: #f9fafb;
+            border-radius: 10px;
+            align-items: center;
+            min-width: calc(var(--cell-size) * 5);
+        }
+
+        .piece-wrapper {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding-bottom: calc(var(--cell-size) * 0.8);
+        }
+
+        .puzzle-piece {
+            cursor: grab;
+            border-radius: 6px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .puzzle-piece.dragging {
+            cursor: grabbing;
+            opacity: 0.5;
+            transform: scale(1.05);
+        }
+
+        #success-message {
+            margin-top: 25px;
+            display: none;
+            animation: fadeIn 0.8s ease;
+        }
+
+        #success-text {
+            font-size: 1.7em;
+            color: var(--secondary-color);
+            font-weight: 600;
+        }
+
+        #next-puzzle-btn {
+            margin-top: 20px;
+            padding: 12px 30px;
+            font-size: 1.25em;
+            color: white;
+            background: var(--primary-color);
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.2s;
+        }
+
+        #next-puzzle-btn:hover {
+            background: #4338ca;
+            transform: translateY(-2px);
+        }
+
+        @media (max-width: 650px) {
+            .puzzle-area {
+                flex-direction: column;
+            }
+            #pieces-container {
+                flex-direction: row;
+                flex-wrap: wrap;
+                justify-content: center;
+                gap: 25px;
+                margin-top: 30px;
+                width: 100%;
+            }
+        }
+
+        .rotate-btn {
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: calc(var(--cell-size) * 0.8);
+            height: calc(var(--cell-size) * 0.65);
+            font-size: calc(var(--cell-size) * 0.5);
+            font-weight: 600;
+            color: var(--primary-color);
+            background: #e0e7ff;
+            border: 1px solid #a5b4fc;
+            border-radius: 8px;
+            cursor: pointer;
+            line-height: calc(var(--cell-size) * 0.65);
+            transition: background-color 0.2s;
+        }
+
+        .rotate-btn:hover {
+            background: #c7d2fe;
+        }
+
+        #touch-clone {
+            position: absolute;
+            z-index: 1000;
+            pointer-events: none;
+            opacity: 0.9;
+        }
+
+        .footer-credits {
+            position: absolute;
+            bottom: 20px;
+            right: 30px;
+            font-size: 1em;
+            color: #6b7280;
+            font-weight: 400;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateY(-20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+    </style>
+    <script src="scorm_api.js"></script>
+</head>
+<body>
+    <div id="instructions-modal">
+        <div class="modal-content">
+            <h2>Birimkarelerle Alan Hesabı</h2>
+            <p>Bu etkinlikte, bir bölgenin alanının, onu kaplayan <strong>birimkare sayısı</strong> olduğunu keşfedeceğiz. Şekilleri oluşturan her bir karenin kenar uzunluğu 1 birimdir.</p>
+            <p><strong>Hedefimiz,</strong> her bir renkli parçanın kaç birimkareden oluştuğuna bakarak bu parçayı, <strong>aynı sayıda birimkareye</strong> sahip boş bölgeye yerleştirmek!</p>
+            <p><strong>Dikkat:</strong> Bir parçayı yerleştirmeden önce mutlaka <strong>döndürmen</strong> gerekebilir.</p>
+            <button id="start-game-btn">Anladım, Başlayalım!</button>
+        </div>
+    </div>
+
+    <div class="game-container">
+        <h1 id="game-title">Birimkare Hesabı</h1>
+        <p class="instructions">Parçaları döndürerek hedef boşluklara tam olarak yerleştiriniz.</p>
+        <div class="puzzle-area">
+            <div id="grid-board"></div>
+            <div id="pieces-container"></div>
+        </div>
+        <div id="success-message">
+            <h2 id="success-text">Harika! Seviyeyi tamamladın!</h2>
+            <button id="next-puzzle-btn">Yeni Seviye</button>
+        </div>
+        <div class="footer-credits">Hazırlayan: Osman AYDOĞDU</div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const instructionsModal = document.getElementById('instructions-modal');
+            const startGameBtn = document.getElementById('start-game-btn');
+            const gameContainer = document.querySelector('.game-container');
+            const gridBoard = document.getElementById('grid-board');
+            const piecesContainer = document.getElementById('pieces-container');
+            const successMessage = document.getElementById('success-message');
+            const nextPuzzleBtn = document.getElementById('next-puzzle-btn');
+            const gameTitle = document.getElementById('game-title');
+            
+            let currentPuzzleIndex = 0, completedPieces = 0, GRID_SIZE = 10;
+            const gridColors = ['#f9a8d4', '#93c5fd', '#f0abfc', '#86efac', '#a5b4fc', '#f472b6', '#fb923c', '#a3e635', '#d4d4d8', '#f4d03f'];
+            let cellSize;
+
+            const getShapeSignature = cells => { 
+                if (!cells || cells.length === 0) return ''; 
+                const minR = Math.min(...cells.map(c => c[0])), minC = Math.min(...cells.map(c => c[1])); 
+                const norm = cells.map(([r, c]) => [r - minR, c - minC]); 
+                norm.sort((a,b)=>a[0]-b[0]||a[1]-b[1]); 
+                return JSON.stringify(norm); 
+            };
+            const rotateCells = (cells, times = 1) => { 
+                if (!cells || cells.length === 0) return []; 
+                let rot = cells; 
+                for(let i=0; i<times; i++){ 
+                    const maxC = Math.max(...rot.map(c=>c[1])); 
+                    rot = rot.map(([r,c]) => [c, maxC-r]); 
+                } 
+                return rot; 
+            };
+            const drawPieceOnCanvas = (canvas, cells, color) => { 
+                const norm = getShapeSignature(cells)?JSON.parse(getShapeSignature(cells)):[]; 
+                if (norm.length === 0) return; 
+                const maxR = Math.max(...norm.map(c=>c[0])), maxC = Math.max(...norm.map(c=>c[1])); 
+                canvas.width=(maxC+1)*cellSize; 
+                canvas.height=(maxR+1)*cellSize; 
+                const ctx=canvas.getContext('2d'); 
+                ctx.clearRect(0,0,canvas.width,canvas.height); 
+                ctx.fillStyle=color; 
+                ctx.strokeStyle='rgba(0,0,0,0.15)'; 
+                ctx.lineWidth=2; 
+                norm.forEach(([r,c]) => { 
+                    ctx.fillRect(c*cellSize, r*cellSize, cellSize, cellSize); 
+                    ctx.strokeRect(c*cellSize, r*cellSize, cellSize, cellSize); 
+                }); 
+            };
+            
+            const puzzleSet = [
+                { levelName: "4 Birimkare - 1", shapes: [
+                    {baseShape:[[0,0],[1,0],[2,0],[2,1]], color:'#f9a8d4', shapeType:'L4'},
+                    {baseShape:[[0,0],[0,1],[0,2],[1,1]], color:'#93c5fd', shapeType:'T4'}
+                ]},
+                { levelName: "5 Birimkare - 1", shapes: [
+                    {baseShape:[[0,1],[1,1],[2,0],[2,1],[2,2]], color:'#f0abfc', shapeType:'F5'},
+                    {baseShape:[[0,0],[0,1],[1,1],[2,1],[2,2]], color:'#86efac', shapeType:'N5'}
+                ]},
+                { levelName: "6 Birimkare - 1", shapes: [
+                    {baseShape:[[0,0],[0,1],[1,1],[1,2],[2,1],[2,2]], color:'#a5b4fc', shapeType:'C6'},
+                    {baseShape:[[0,0],[1,0],[1,1],[1,2],[2,2],[2,1]], color:'#f472b6', shapeType:'G6'}
+                ]},
+                { levelName: "4 Birimkare - 2", shapes: [
+                    {baseShape:[[0,0],[0,1],[1,0],[1,1]], color:'#fb923c', shapeType:'S4'},
+                    {baseShape:[[0,0],[0,1],[1,1],[1,2]], color:'#a3e635', shapeType:'Z4'}
+                ]},
+                { levelName: "5 Birimkare - 2", shapes: [
+                    {baseShape:[[0,0],[0,1],[0,2],[0,3],[1,3]], color:'#d4d4d8', shapeType:'I5'},
+                    {baseShape:[[0,0],[0,1],[1,1],[1,2],[2,2]], color:'#f4d03f', shapeType:'P5'}
+                ]},
+                { levelName: "6 Birimkare - 2", shapes: [
+                    {baseShape:[[0,0],[0,1],[0,2],[1,0],[1,1],[2,1]], color:'#f9a8d4', shapeType:'U6'},
+                    {baseShape:[[0,0],[1,0],[1,1],[2,1],[3,1],[3,0]], color:'#93c5fd', shapeType:'V6'}
+                ]},
+                { levelName: "7 Birimkare - 1", shapes: [
+                    {baseShape:[[0,0],[0,1],[0,2],[1,0],[1,1],[1,2],[2,1]], color:'#f0abfc', shapeType:'X7'},
+                    {baseShape:[[0,0],[0,1],[1,1],[2,1],[2,2],[3,1],[3,2]], color:'#86efac', shapeType:'Y7'}
+                ]},
+                { levelName: "4 Birimkare - 3", shapes: [
+                    {baseShape:[[0,0],[1,0],[1,1],[2,0]], color:'#a5b4fc', shapeType:'J4'},
+                    {baseShape:[[0,1],[1,0],[1,1],[2,1]], color:'#f472b6', shapeType:'K4'}
+                ]},
+                { levelName: "5 Birimkare - 3", shapes: [
+                    {baseShape:[[0,0],[0,1],[1,0],[1,1],[2,0]], color:'#fb923c', shapeType:'W5'},
+                    {baseShape:[[0,0],[1,0],[1,1],[2,0],[2,1]], color:'#a3e635', shapeType:'Q5'}
+                ]},
+                { levelName: "6 Birimkare - 3", shapes: [
+                    {baseShape:[[0,0],[0,1],[0,2],[1,1],[1,2],[2,2]], color:'#d4d4d8', shapeType:'R6'},
+                    {baseShape:[[0,0],[0,1],[1,0],[1,1],[2,0],[2,1]], color:'#f4d03f', shapeType:'S6'}
+                ]},
+                { levelName: "7 Birimkare - 2", shapes: [
+                    {baseShape:[[0,0],[0,1],[0,2],[0,3],[1,0],[1,1],[1,2]], color:'#f9a8d4', shapeType:'T7'},
+                    {baseShape:[[0,0],[1,0],[1,1],[2,0],[2,1],[3,0],[3,1]], color:'#93c5fd', shapeType:'U7'}
+                ]},
+                { levelName: "4 Birimkare - 4", shapes: [
+                    {baseShape:[[0,0],[0,1],[0,2],[0,3]], color:'#f0abfc', shapeType:'I4'},
+                    {baseShape:[[0,0],[1,0],[2,0],[3,0]], color:'#86efac', shapeType:'H4'}
+                ]},
+                { levelName: "5 Birimkare - 4", shapes: [
+                    {baseShape:[[0,0],[0,1],[0,2],[1,0],[1,1]], color:'#a5b4fc', shapeType:'M5'},
+                    {baseShape:[[0,0],[0,1],[1,1],[1,2],[2,1]], color:'#f472b6', shapeType:'O5'}
+                ]}
+            ];
+
+            function findValidPosition(shapeCells, placementGrid) {
+                const validPositions = [];
+                const shapeHeight = Math.max(...shapeCells.map(c => c[0])) + 1;
+                const shapeWidth = Math.max(...shapeCells.map(c => c[1])) + 1;
+                
+                for (let r = 0; r <= GRID_SIZE - shapeHeight; r++) {
+                    for (let c = 0; c <= GRID_SIZE - shapeWidth; c++) {
+                        let fits = true;
+                        for (const [dr, dc] of shapeCells) {
+                            if (r + dr >= GRID_SIZE || c + dc >= GRID_SIZE || placementGrid[r + dr][c + dc]) {
+                                fits = false;
+                                break;
+                            }
+                        }
+                        if (fits) validPositions.push({ row: r, col: c });
+                    }
+                }
+                if (validPositions.length === 0) {
+                    console.warn("No valid position found for shape.");
+                    return null;
+                }
+                return validPositions[Math.floor(Math.random() * validPositions.length)];
+            }
+
+            function loadPuzzle(index) {
+                cellSize = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--cell-size'));
+                gridBoard.innerHTML = ''; 
+                piecesContainer.innerHTML = ''; 
+                successMessage.style.display = 'none'; 
+                completedPieces = 0;
+                
+                for (let i = 0; i < GRID_SIZE * GRID_SIZE; i++) { 
+                    const c = document.createElement('div'); 
+                    c.classList.add('grid-cell', 'filled'); 
+                    c.style.backgroundColor = gridColors[Math.floor(Math.random() * gridColors.length)]; 
+                    gridBoard.appendChild(c);
+                }
+                const puzzle = puzzleSet[index];
+                gameTitle.textContent = puzzle.levelName;
+                
+                const placementGrid = Array.from({ length: GRID_SIZE }, () => Array(GRID_SIZE).fill(false));
+                const puzzlePiecesToPlace = [...puzzle.shapes, ...puzzle.shapes].sort(() => 0.5 - Math.random());
+                let pieceCounter = 0;
+                let placementAttempts = 0;
+                const maxAttempts = 10;
+
+                function placeShapes(pieces, index = 0) {
+                    if (index >= pieces.length) return true;
+                    const shapeData = pieces[index];
+                    const { baseShape, color, shapeType } = shapeData;
+                    
+                    let targetSig, pieceSig;
+                    const rots = [0, 1, 2, 3].sort(() => 0.5 - Math.random());
+                    targetSig = getShapeSignature(rotateCells(baseShape, rots[0]));
+                    pieceSig = getShapeSignature(rotateCells(baseShape, rots[1]));
+                    
+                    // Simetrik şekiller için aynı imza kabul edilebilir
+                    const isSymmetric = shapeType === 'S4' || shapeType === 'I4' || shapeType === 'H4';
+                    if (targetSig === pieceSig && !isSymmetric) {
+                        return false; // Simetrik olmayanlar için farklı imza zorunlu
+                    }
+                    
+                    const targetCells = JSON.parse(targetSig);
+                    const pos = findValidPosition(targetCells, placementGrid);
+                    if (!pos) {
+                        console.warn(`No valid position for ${shapeType}.`);
+                        return false;
+                    }
+                    const { row: startRow, col: startCol } = pos;
+
+                    const targetId = `${shapeType}_target_${pieceCounter}`;
+                    targetCells.forEach(([r, c]) => {
+                        placementGrid[startRow + r][startCol + c] = true;
+                        const idx = (startRow + r) * GRID_SIZE + (startCol + c);
+                        const cell = gridBoard.children[idx];
+                        cell.className = 'grid-cell droppable'; 
+                        cell.style.backgroundColor = '';
+                        cell.dataset.signature = targetSig; 
+                        cell.dataset.zoneId = targetId; 
+                        cell.dataset.shapeType = shapeType;
+                    });
+
+                    const pieceCells = JSON.parse(pieceSig);
+                    const wrapper = document.createElement('div');
+                    wrapper.className = 'piece-wrapper'; 
+                    wrapper.dataset.pieceId = `piece_${pieceCounter++}`;
+                    wrapper.dataset.shapeType = shapeType; 
+                    wrapper.dataset.currentCells = JSON.stringify(pieceCells);
+                    const canvas = document.createElement('canvas'); 
+                    canvas.className = 'puzzle-piece'; 
+                    canvas.draggable = true;
+                    drawPieceOnCanvas(canvas, pieceCells, color);
+                    const rotateBtn = document.createElement('button'); 
+                    rotateBtn.className = 'rotate-btn'; 
+                    rotateBtn.innerHTML = '↻';
+                    
+                    const handleRotation = (event) => {
+                        event.stopPropagation();
+                        if (event.type === 'touchstart') {
+                            event.preventDefault(); 
+                        }
+                        let cells = JSON.parse(wrapper.dataset.currentCells);
+                        cells = rotateCells(cells);
+                        wrapper.dataset.currentCells = JSON.stringify(cells);
+                        drawPieceOnCanvas(canvas, cells, color);
+                    };
+
+                    rotateBtn.addEventListener('click', handleRotation);
+                    rotateBtn.addEventListener('touchstart', handleRotation, { passive: false }); 
+                    
+                    wrapper.appendChild(canvas); 
+                    wrapper.appendChild(rotateBtn);
+                    piecesContainer.appendChild(wrapper);
+
+                    return placeShapes(pieces, index + 1);
+                }
+
+                while (placementAttempts < maxAttempts) {
+                    placementGrid.forEach(row => row.fill(false));
+                    gridBoard.innerHTML = '';
+                    piecesContainer.innerHTML = '';
+                    pieceCounter = 0;
+                    for (let i = 0; i < GRID_SIZE * GRID_SIZE; i++) { 
+                        const c = document.createElement('div'); 
+                        c.classList.add('grid-cell', 'filled'); 
+                        c.style.backgroundColor = gridColors[Math.floor(Math.random() * gridColors.length)]; 
+                        gridBoard.appendChild(c);
+                    }
+                    if (placeShapes(puzzlePiecesToPlace)) break;
+                    placementAttempts++;
+                }
+
+                if (placementAttempts >= maxAttempts) {
+                    console.error(`Failed to place shapes for puzzle ${puzzle.levelName} after ${maxAttempts} attempts.`);
+                    gameTitle.textContent = `Hata: ${puzzle.levelName} yüklenemedi.`;
+                    return;
+                }
+
+                attachEventListeners();
+            }
+            
+            function attachEventListeners() {
+                let draggedWrapper = null, touchClone = null;
+
+                const onDragStart = (e, wrapper) => {
+                    if (wrapper.style.display === 'none') return;
+                    draggedWrapper = wrapper;
+                    if (e.type === 'touchstart') {
+                        e.preventDefault();
+                        const canvas = wrapper.querySelector('.puzzle-piece');
+                        touchClone = canvas.cloneNode(true);
+                        const ctx = touchClone.getContext('2d'); 
+                        ctx.drawImage(canvas, 0, 0);
+                        touchClone.id = 'touch-clone';
+                        document.body.appendChild(touchClone);
+                        updateClonePosition(e.touches[0], canvas);
+                    } else {
+                        e.dataTransfer.setData('text/plain', wrapper.dataset.pieceId);
+                    }
+                    wrapper.querySelector('.puzzle-piece').classList.add('dragging');
+                };
+
+                const onDragMove = e => {
+                    if (!draggedWrapper) return;
+                    e.preventDefault();
+                    const touch = e.type === 'touchmove' ? e.touches[0] : e;
+                    if (e.type === 'touchmove') updateClonePosition(touch, draggedWrapper.querySelector('.puzzle-piece'));
+                    const elUnder = document.elementFromPoint(touch.clientX, touch.clientY);
+                    document.querySelectorAll('.over').forEach(c => c.classList.remove('over'));
+                    if (elUnder && elUnder.classList.contains('droppable') && !elUnder.dataset.filled && draggedWrapper.dataset.shapeType === elUnder.dataset.shapeType) {
+                        document.querySelectorAll(`[data-zone-id="${elUnder.dataset.zoneId}"]`).forEach(c => c.classList.add('over'));
+                    }
+                };
+
+                const onDragEnd = e => {
+                    if (!draggedWrapper) return;
+                    const touch = e.type === 'touchend' ? e.changedTouches[0] : e;
+                    const elUnder = document.elementFromPoint(touch.clientX, touch.clientY);
+
+                    if (elUnder && elUnder.classList.contains('droppable') && !elUnder.dataset.filled) {
+                        const pieceSig = getShapeSignature(JSON.parse(draggedWrapper.dataset.currentCells));
+                        if (draggedWrapper.dataset.shapeType === elUnder.dataset.shapeType && pieceSig === elUnder.dataset.signature) {
+                            handleSuccessfulDrop(draggedWrapper, elUnder);
+                        }
+                    }
+                    if (draggedWrapper) draggedWrapper.querySelector('.puzzle-piece').classList.remove('dragging');
+                    document.querySelectorAll('.over').forEach(c => c.classList.remove('over'));
+                    if (touchClone) { document.body.removeChild(touchClone); touchClone = null; }
+                    draggedWrapper = null;
+                };
+
+                const updateClonePosition = (touch, canvas) => { 
+                    if (touchClone) { 
+                        touchClone.style.left = `${touch.clientX - canvas.offsetWidth/2}px`; 
+                        touchClone.style.top = `${touch.clientY - canvas.offsetHeight/2}px`; 
+                    } 
+                };
+                
+                document.querySelectorAll('.piece-wrapper').forEach(w => {
+                    w.addEventListener('dragstart', e => onDragStart(e, w));
+                    w.addEventListener('touchstart', e => onDragStart(e, w), { passive: false });
+                });
+                document.addEventListener('dragover', onDragMove);
+                document.addEventListener('touchmove', onDragMove, { passive: false });
+                document.addEventListener('drop', onDragEnd);
+                document.addEventListener('touchend', onDragEnd);
+            }
+            
+            function handleSuccessfulDrop(wrapper, targetZone) {
+                const shapeType = wrapper.dataset.shapeType;
+                const color = puzzleSet[currentPuzzleIndex].shapes.find(s => s.shapeType === shapeType).color;
+                const zoneId = targetZone.dataset.zoneId;
+                const dropzones = document.querySelectorAll(`[data-zone-id='${zoneId}']`);
+                dropzones.forEach(cell => {
+                    cell.style.backgroundColor = color;
+                    cell.style.border = '1px solid rgba(0,0,0,0.1)';
+                    cell.classList.remove('droppable', 'over');
+                    cell.dataset.filled = 'true';
+                });
+                wrapper.style.display = 'none';
+                completedPieces++;
+                checkCompletion();
+            }
+            
+            function checkCompletion() {
+                const totalPieces = puzzleSet[currentPuzzleIndex].shapes.length * 2;
+                if (completedPieces === totalPieces) {
+                    const successText = document.getElementById('success-text');
+                    const nextBtn = document.getElementById('next-puzzle-btn');
+
+                    const newNextBtn = nextBtn.cloneNode(true);
+                    nextBtn.parentNode.replaceChild(newNextBtn, nextBtn);
+                    
+                    const oldEndBtn = newNextBtn.parentNode.querySelector('#end-game-btn');
+                    if (oldEndBtn) {
+                        oldEndBtn.remove();
+                    }
+
+                    if (currentPuzzleIndex === puzzleSet.length - 1) {
+                        successText.innerHTML = "Tebrikler, oyunu tamamladın!<br>Yeniden başlamak ister misin?";
+                        
+                        newNextBtn.textContent = 'Yeniden Başla';
+                        newNextBtn.addEventListener('click', () => {
+                            currentPuzzleIndex = 0;
+                            loadPuzzle(currentPuzzleIndex);
+                        });
+
+                        const endBtn = document.createElement('button');
+                        endBtn.id = 'end-game-btn';
+                        endBtn.textContent = 'Etkinliği Bitir';
+                        
+                        Object.assign(endBtn.style, {
+                            marginTop: '15px', padding: '12px 25px', fontSize: '1.25em',
+                            color: 'white', background: '#6b7280', border: 'none',
+                            borderRadius: '10px', cursor: 'pointer', marginLeft: '15px'
+                        });
+
+                        endBtn.addEventListener('click', () => {
+                            gameContainer.innerHTML = '<h1>Etkinliği başarıyla tamamladın!</h1>';
+                        });
+                        
+                        newNextBtn.parentNode.appendChild(endBtn);
+                    } else {
+                        successText.textContent = 'Harika! Seviyeyi tamamladın!';
+                        newNextBtn.textContent = `Sıradaki: ${puzzleSet[(currentPuzzleIndex + 1) % puzzleSet.length].levelName}`;
+                        newNextBtn.addEventListener('click', () => {
+                            currentPuzzleIndex = (currentPuzzleIndex + 1) % puzzleSet.length;
+                            loadPuzzle(currentPuzzleIndex);
+                        });
+                    }
+
+                    successMessage.style.display = 'block';
+                }
+            }
+            
+            startGameBtn.addEventListener('click', () => {
+                instructionsModal.style.display = 'none';
+                gameContainer.style.display = 'block';
+                loadPuzzle(currentPuzzleIndex);
+            });
+        });
+    </script>
+</body>
+</html>
