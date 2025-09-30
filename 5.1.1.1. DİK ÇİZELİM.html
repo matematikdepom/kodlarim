@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dikme Çizelim</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.2/p5.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #3b82f6;
+            --success-color: #22c55e;
+            --error-color: #ef4444;
+            --bg-color: #f0f9ff;
+            --container-bg: #ffffff;
+            --text-color: #1f2937;
+            --border-color: #e5e7eb;
+            --shadow-color: rgba(0, 0, 0, 0.05);
+        }
+        body.dikme-app {
+            font-family: 'Inter', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            text-align: center;
+        }
+        .dikme-container {
+            padding: 30px;
+            background-color: var(--container-bg);
+            border-radius: 16px;
+            box-shadow: 0 8px 16px var(--shadow-color);
+            max-width: 95%;
+            width: 600px;
+            box-sizing: border-box;
+            transition: all 0.3s ease;
+        }
+        .dikme-container h1 {
+            color: var(--primary-color);
+            margin-bottom: 20px;
+            font-size: 2em;
+            font-weight: 700;
+        }
+        .dikme-container p {
+            font-size: 1.1em;
+            margin-bottom: 25px;
+            line-height: 1.6;
+        }
+        .dikme-canvas {
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            cursor: crosshair;
+            background-color: #fff;
+            width: 100%;
+            height: auto;
+            box-shadow: 0 4px 8px var(--shadow-color);
+        }
+        .dikme-btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 14px 28px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1.1em;
+            font-weight: 600;
+            transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
+            min-width: 200px;
+        }
+        .dikme-btn:hover {
+            background-color: #2563eb;
+            transform: translateY(-3px);
+            box-shadow: 0 4px 8px rgba(59, 130, 246, 0.3);
+        }
+        .dikme-btn.success {
+            background-color: var(--success-color);
+        }
+        .dikme-btn.success:hover {
+            background-color: #16a34a;
+            box-shadow: 0 4px 8px rgba(34, 197, 94, 0.3);
+        }
+        #dikme-feedback {
+            margin-top: 20px;
+            font-size: 1.3em;
+            font-weight: 600;
+            height: 35px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: color 0.3s ease;
+        }
+        #dikme-startScreen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        #dikme-activityScreen {
+            display: none;
+        }
+        .dikme-credit {
+            font-size: 0.9em;
+            color: #6b7280;
+            margin-top: 10px;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .dikme-container > div {
+            animation: fadeIn 0.5s ease-out;
+        }
+        .dikme-error {
+            color: var(--error-color);
+            font-size: 1em;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body class="dikme-app">
+    <div class="dikme-container">
+        <div id="dikme-startScreen">
+            <h1>Dikme Çizelim</h1>
+            <p>Bir doğruya, dışındaki bir noktadan nasıl dikme çizileceğini öğrenmeye hazır mısın?</p>
+            <button id="dikme-startButton" class="dikme-btn">Başla</button>
+            <div class="dikme-credit">Hazırlayan: Osman AYDOĞDU</div>
+            <div id="dikme-error" class="dikme-error"></div>
+        </div>
+        <div id="dikme-activityScreen">
+            <h1>Dikme Çizelim</h1>
+            <p>
+                <b>P</b> noktasından <b>AB</b> doğrusuna dik bir çizgi çizin.
+                Başlamak için P noktasına tıklayın ya da dokunun, sonra dikmeyi oluşturun.
+            </p>
+            <div id="dikme-canvasContainer"></div>
+            <div id="dikme-feedback"></div>
+            <button id="dikme-actionButton" class="dikme-btn">Tekrar Dene</button>
+        </div>
+    </div>
+    <script>
+        // p5.js kütüphanesinin yüklendiğini kontrol et
+        if (typeof p5 === 'undefined') {
+            document.getElementById('dikme-error').textContent = 'Hata: p5.js kütüphanesi yüklenemedi. İnternet bağlantınızı kontrol edin.';
+            throw new Error('p5.js not loaded');
+        }
+
+        let currentStage = 1;
+        let stages;
+        let pointP, lineD;
+        let isDrawing = false;
+        let userLine = null;
+        let isTaskSuccessful = false;
+        const tolerance = 6;
+        const gridSize = 20;
+
+        function snapToGrid(coord) {
+            return Math.round(coord / gridSize) * gridSize;
+        }
+
+        function setup() {
+            let parentWidth = document.getElementById('dikme-activityScreen').clientWidth || 500;
+            let canvasWidth = parentWidth > 500 ? 500 : parentWidth - 2;
+            let canvasHeight = canvasWidth * 0.8;
+            let canvas = createCanvas(canvasWidth, canvasHeight);
+            canvas.parent('dikme-canvasContainer');
+            canvas.class('dikme-canvas');
+            setupStages();
+            setupStage(currentStage);
+        }
+
+        function setupStages() {
+            let w = width;
+            let h = height;
+            stages = {
+                1: {
+                    point: { x: snapToGrid(w / 2), y: snapToGrid(h * 0.25) },
+                    line: {
+                        x1: snapToGrid(w * 0.1), y1: snapToGrid(h * 0.8),
+                        x2: snapToGrid(w * 0.9), y2: snapToGrid(h * 0.8),
+                        type: 'horizontal'
+                    }
+                },
+                2: {
+                    point: { x: snapToGrid(w * 0.25), y: snapToGrid(h / 2) },
+                    line: {
+                        x1: snapToGrid(w * 0.8), y1: snapToGrid(h * 0.1),
+                        x2: snapToGrid(w * 0.8), y2: snapToGrid(h * 0.9),
+                        type: 'vertical'
+                    }
+                },
+                3: {
+                    point: { x: snapToGrid(w / 2), y: snapToGrid(h * 0.8) },
+                    line: {
+                        x1: snapToGrid(w * 0.1), y1: snapToGrid(h * 0.25),
+                        x2: snapToGrid(w * 0.9), y2: snapToGrid(h * 0.25),
+                        type: 'horizontal'
+                    }
+                }
+            };
+        }
+
+        function setupStage(stageNumber) {
+            isTaskSuccessful = false;
+            userLine = null;
+            let stage = stages[stageNumber];
+            pointP = stage.point;
+            lineD = stage.line;
+            document.getElementById('dikme-feedback').textContent = '';
+            document.getElementById('dikme-actionButton').textContent = 'Tekrar Dene';
+            document.getElementById('dikme-actionButton').className = 'dikme-btn';
+        }
+
+        function drawGrid() {
+            stroke(200, 200, 200);
+            strokeWeight(0.5);
+            for (let x = 0; x <= width; x += gridSize) {
+                line(x, 0, x, height);
+            }
+            for (let y = 0; y <= height; y += gridSize) {
+                line(0, y, width, y);
+            }
+        }
+
+        function drawArrowhead(fromX, fromY, toX, toY) {
+            let headlen = 12;
+            let angle = atan2(toY - fromY, toX - fromX);
+            stroke(getComputedStyle(document.documentElement).getPropertyValue('--text-color'));
+            strokeWeight(2.5);
+            line(toX, toY, toX - headlen * cos(angle - PI / 6), toY - headlen * sin(angle - PI / 6));
+            line(toX, toY, toX - headlen * cos(angle + PI / 6), toY - headlen * sin(angle + PI / 6));
+        }
+
+        function drawRightAngleSymbol(x, y) {
+            stroke(getComputedStyle(document.documentElement).getPropertyValue('--success-color'));
+            strokeWeight(3);
+            let size = 12;
+            let dx1, dy1, dx2, dy2;
+            if (lineD.type === 'horizontal') {
+                let pIsAbove = pointP.y < lineD.y1;
+                dy1 = pIsAbove ? -size : size;
+                dx2 = pointP.x > x ? -size : size;
+                line(x, y + dy1, x + dx2, y + dy1);
+                line(x + dx2, y + dy1, x + dx2, y);
+                fill(getComputedStyle(document.documentElement).getPropertyValue('--success-color'));
+                circle(x + dx2 / 2, y + dy1 / 2, 3);
+            } else {
+                let pIsLeft = pointP.x < lineD.x1;
+                dx1 = pIsLeft ? -size : size;
+                dy2 = pointP.y > y ? -size : size;
+                line(x + dx1, y, x + dx1, y + dy2);
+                line(x + dx1, y + dy2, x, y + dy2);
+                fill(getComputedStyle(document.documentElement).getPropertyValue('--success-color'));
+                circle(x + dx1 / 2, y + dy2 / 2, 3);
+            }
+        }
+
+        function draw() {
+            background(255);
+            drawGrid();
+            stroke(getComputedStyle(document.documentElement).getPropertyValue('--text-color'));
+            strokeWeight(3);
+            line(lineD.x1, lineD.y1, lineD.x2, lineD.y2);
+            drawArrowhead(lineD.x2, lineD.y2, lineD.x1, lineD.y1);
+            drawArrowhead(lineD.x1, lineD.y1, lineD.x2, lineD.y2);
+            fill(getComputedStyle(document.documentElement).getPropertyValue('--text-color'));
+            textFont('Inter');
+            textSize(22);
+            textStyle(BOLD);
+            let labelOffset = lineD.type === 'horizontal' ? (lineD.y1 > height / 2 ? 30 : -20) : 20;
+            text('A', lineD.x1 + (lineD.type === 'vertical' ? labelOffset : 0), lineD.y1 + (lineD.type === 'horizontal' ? labelOffset : 5));
+            text('B', lineD.x2 + (lineD.type === 'vertical' ? labelOffset : 0), lineD.y2 + (lineD.type === 'horizontal' ? labelOffset : 0));
+            fill(getComputedStyle(document.documentElement).getPropertyValue('--primary-color'));
+            circle(pointP.x, pointP.y, 10);
+            text('P', pointP.x + 18, pointP.y + 12);
+            if (isDrawing && userLine) {
+                stroke(getComputedStyle(document.documentElement).getPropertyValue('--primary-color'));
+                strokeWeight(2.5);
+                drawingContext.setLineDash([6, 6]);
+                line(userLine.start.x, userLine.start.y, userLine.end.x, userLine.end.y);
+                drawingContext.setLineDash([]);
+            }
+        }
+
+        function mousePressed() {
+            if (isTaskSuccessful || mouseButton !== LEFT) return;
+            if (dist(mouseX, mouseY, pointP.x, pointP.y) < 15) {
+                isDrawing = true;
+                userLine = { start: pointP, end: { x: mouseX, y: mouseY } };
+            }
+        }
+
+        function mouseDragged() {
+            if (!isDrawing) return;
+            userLine.end = { x: mouseX, y: mouseY };
+        }
+
+        function mouseReleased() {
+            if (!isDrawing) return;
+            isDrawing = false;
+            let minimumDragDistance = 10;
+            let lineLength = dist(userLine.start.x, userLine.start.y, userLine.end.x, userLine.end.y);
+            if (lineLength < minimumDragDistance) {
+                userLine = null;
+                return;
+            }
+            let isAngleCorrect = false;
+            let intersectionPoint;
+            if (lineD.type === 'horizontal') {
+                isAngleCorrect = Math.abs(userLine.end.x - pointP.x) <= tolerance;
+                intersectionPoint = { x: pointP.x, y: lineD.y1 };
+            } else {
+                isAngleCorrect = Math.abs(userLine.end.y - pointP.y) <= tolerance;
+                intersectionPoint = { x: lineD.x1, y: pointP.y };
+            }
+            let feedbackEl = document.getElementById('dikme-feedback');
+            let actionButton = document.getElementById('dikme-actionButton');
+            if (isAngleCorrect) {
+                isTaskSuccessful = true;
+                stroke(getComputedStyle(document.documentElement).getPropertyValue('--success-color'));
+                strokeWeight(3.5);
+                line(pointP.x, pointP.y, intersectionPoint.x, intersectionPoint.y);
+                drawRightAngleSymbol(intersectionPoint.x, intersectionPoint.y);
+                feedbackEl.style.color = getComputedStyle(document.documentElement).getPropertyValue('--success-color');
+                actionButton.className = 'dikme-btn success';
+                if (currentStage < Object.keys(stages).length) {
+                    feedbackEl.textContent = 'Harika! Sıradaki göreve geçebilirsin.';
+                    actionButton.textContent = 'Sonraki Görev';
+                } else {
+                    feedbackEl.textContent = 'Tebrikler! Tüm görevleri tamamladın.';
+                    actionButton.textContent = 'Baştan Başla';
+                }
+            } else {
+                stroke(getComputedStyle(document.documentElement).getPropertyValue('--error-color'));
+                strokeWeight(3.5);
+                line(userLine.start.x, userLine.start.y, userLine.end.x, userLine.end.y);
+                feedbackEl.textContent = 'Tekrar deneyiniz.';
+                feedbackEl.style.color = getComputedStyle(document.documentElement).getPropertyValue('--error-color');
+            }
+        }
+
+        function handleAction() {
+            if (isTaskSuccessful) {
+                if (currentStage < Object.keys(stages).length) {
+                    currentStage++;
+                } else {
+                    currentStage = 1;
+                }
+            }
+            setupStage(currentStage);
+        }
+
+        function resizeCanvasAndInit() {
+            let parentWidth = document.getElementById('dikme-activityScreen').clientWidth || 500;
+            let canvasWidth = parentWidth > 500 ? 500 : parentWidth - 2;
+            let canvasHeight = canvasWidth * 0.8;
+            resizeCanvas(canvasWidth, canvasHeight);
+            setupStages();
+            setupStage(currentStage);
+        }
+
+        // Olay dinleyicilerini bağla
+        document.addEventListener('DOMContentLoaded', () => {
+            const startButton = document.getElementById('dikme-startButton');
+            if (!startButton) {
+                console.error('Başla butonu bulunamadı!');
+                document.getElementById('dikme-error').textContent = 'Hata: Başla butonu yüklenemedi.';
+                return;
+            }
+            startButton.addEventListener('click', () => {
+                console.log('Başla butonuna tıklandı!');
+                document.getElementById('dikme-startScreen').style.display = 'none';
+                document.getElementById('dikme-activityScreen').style.display = 'block';
+                setup(); // Canvas'ı burada başlat
+                resizeCanvasAndInit();
+            });
+            document.getElementById('dikme-actionButton').addEventListener('click', handleAction);
+            window.addEventListener('resize', resizeCanvasAndInit);
+        });
+    </script>
+</body>
+</html>
